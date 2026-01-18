@@ -44,9 +44,10 @@ const UserRegister = ({ onUserAdded, editingUser, setEditingUser, users = [] }) 
             return false;
         }
 
-        if (formData.password.length < 6) {
-           newErrors.password = "Password must be at least 8 characters long";
-            return false;
+         if (!editingUser || (formData.password && formData.password.length > 0)) {
+            if ((formData.password?.length || 0) < 6) {
+                newErrors.password = "Password must be at least 6 characters long";
+            }
         }
 
         if (formData.mobile_no_1.length < 10) {

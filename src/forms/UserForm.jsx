@@ -4,6 +4,7 @@ import { userApi } from "../services/api";
 import { CiEdit, CiSearch, CiTrash } from "react-icons/ci";
 import { FaUser } from "react-icons/fa";
 import UserRegister from "../pages/UserRegister";
+import Navbar from "../layout/Navbar";
 
 
 const UserForm = () => {
@@ -34,21 +35,21 @@ const UserForm = () => {
             : userApi.getUserByText(searchTerm);
 
         request
-        .then(res => {
-            const receivedData = res.data && res.data.data ? res.data.data : [];
-            setUsers(receivedData);
-        })
-        .catch(err => {
-            console.log("Search error:", err);
-            setUsers([]);
-        })
-        .finally(() => setLoading(false));
-};
+            .then(res => {
+                const receivedData = res.data && res.data.data ? res.data.data : [];
+                setUsers(receivedData);
+            })
+            .catch(err => {
+                console.log("Search error:", err);
+                setUsers([]);
+            })
+            .finally(() => setLoading(false));
+    };
 
     useEffect(() => {
         const delay = setTimeout(() => {
             fetchUsers();
-        }, 500); 
+        }, 500);
 
         return () => clearTimeout(delay);
     }, [searchTerm]);
@@ -126,47 +127,51 @@ const UserForm = () => {
     }, []);
 
     return (
-       <div className="relative min-h-screen bg-white overflow-x-hidden p-6">
-        <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-100 rounded-full blur-[120px] opacity-60 pointer-events-none"></div>
-        <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-100 rounded-full blur-[120px] opacity-60 pointer-events-none"></div>
+        <>
 
-        <div className="relative z-10 flex flex-col gap-12 items-center">
-            
-            <UserRegister
-                onUserAdded={fetchUsers}
-                editingUser={editingUser}
-                setEditingUser={setEditingUser} 
-            />
+        <Navbar />
+            <div className="relative min-h-screen bg-white overflow-x-hidden p-6 mt-6">
+                <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-100 rounded-full blur-[120px] opacity-60 pointer-events-none"></div>
+                <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-100 rounded-full blur-[120px] opacity-60 pointer-events-none"></div>
 
-            <div className="w-full ">
-                
-                <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6 px-6">
-                    
-                    <h2 className="text-3xl font-bold text-green-600 flex items-center gap-3">
-                        <FaUser />
-                        <span>User Management</span>
-                    </h2>
-                    
-                    <div className="relative w-full md:w-96 group">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <CiSearch className="h-6 w-6 text-emerald-500 font-bold" />
+                <div className="relative z-10 flex flex-col gap-12 items-center">
+
+                    <UserRegister
+                        onUserAdded={fetchUsers}
+                        editingUser={editingUser}
+                        setEditingUser={setEditingUser}
+                    />
+
+                    <div className="w-full ">
+
+                        <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6 px-6">
+
+                            <h2 className="text-3xl font-bold text-green-600 flex items-center gap-3">
+                                <FaUser />
+                                <span>User Management</span>
+                            </h2>
+
+                            <div className="relative w-full md:w-96 group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <CiSearch className="h-6 w-6 text-emerald-500 font-bold" />
+                                </div>
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder="Search by name, email, city..."
+                                    className="block w-full pl-12 pr-4 py-3 bg-white/60 border border-emerald-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500 backdrop-blur-md transition-all text-gray-700 shadow-sm placeholder:text-gray-400"
+                                />
+                            </div>
                         </div>
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Search by name, email, city..."
-                            className="block w-full pl-12 pr-4 py-3 bg-white/60 border border-emerald-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500 backdrop-blur-md transition-all text-gray-700 shadow-sm placeholder:text-gray-400"
-                        />
+
+                        <div className="backdrop-blur-xl p-8 overflow-hidden">
+                            <DataTabale columns={userColumns} data={users} />
+                        </div>
                     </div>
                 </div>
-
-                <div className="backdrop-blur-xl p-8 overflow-hidden">
-                    <DataTabale columns={userColumns} data={users} />
-                </div>
             </div>
-        </div>
-    </div>
+        </>
     )
 }
 
