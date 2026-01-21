@@ -7,6 +7,8 @@ import RoleForm from "./forms/RoleForm";
 import SuperAdminRegister from "./pages/SuperAdminRegister";
 import SuperAdminForm from "./forms/SuperAdminForm";
 import Navbar from "./layout/Navbar";
+import CategoryForm from "./forms/CategoryForm";
+import  { Category }  from "./pages/Category";
 
 
 
@@ -23,6 +25,10 @@ function App() {
                 <Route path="/superAdmin" element={<SuperAdminRegister />} />
                 <Route path="/superAdminForm" element={<SuperAdminForm />} />
                 <Route path="/navbar" element={<Navbar />} />
+                <Route path="/categoryForm" element={<CategoryForm />} />
+                <Route path="/category" element={<Category />} />
+
+
             </Routes>
         </Router>
     );
