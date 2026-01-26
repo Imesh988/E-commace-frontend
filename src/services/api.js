@@ -43,4 +43,12 @@ export const categoryAPI = {
     updateCategory: (categoryID, categoryData) => httpRequest.put(`/category/update/${categoryID}`, categoryData),
     deleteCategory: (categoryID) => httpRequest.put(`/category/delete/${categoryID}`),
 
-}
+};
+export const productAPI = {
+    createProduct: (product) => httpRequest.post("/product/create", product),
+    getAllProduct: () => httpRequest.get("/product/all"),
+    getProductById: (productId) => httpRequest.get(`/product/id/${productId}`),
+    getProductByText: (text) => httpRequest.get(`/product/search/${text}`),
+    updateProduct: (productId, productData) => httpRequest.put(`/product/update/${productId}`, productData),
+    deleteProduct: (productId) => httpRequest.put(`/product/delete/${productId}`),
+};

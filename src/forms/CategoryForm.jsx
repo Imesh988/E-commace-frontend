@@ -16,7 +16,7 @@ import { categoryAPI } from "../services/api";
     category_img_2: null,
   });
 
-  // ✅ FIX: reliable edit mode detection
+ 
   const isEditing = !!editingCategory?.category_id;
 
   useEffect(() => {
@@ -77,7 +77,7 @@ import { categoryAPI } from "../services/api";
 
       onCategoryAdded();
       resetForm();
-      cancleEdit(); // ✅ exit edit mode after update
+      cancleEdit(); 
     } catch (err) {
       console.error(err);
     }
