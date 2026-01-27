@@ -156,7 +156,7 @@ const UserRegister = ({ onUserAdded, editingUser, setEditingUser, users = [] }) 
                 </div>
                 <h2 className={`text-2xl font-bold text-emerald-600`}>
                     {editingUser ? 'Update User Details' : 'Register New User'}
-                </h2>
+                </h2>  
 
             </div>
 
@@ -172,7 +172,7 @@ const UserRegister = ({ onUserAdded, editingUser, setEditingUser, users = [] }) 
                         error={errors.first_name}
                         required />
                     <TextField
-                        label="Last Name"
+                        label="Last Nam  e"
                         name="last_name"
                         value={formData.last_name}
                         onChange={handleChange}
