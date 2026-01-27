@@ -91,7 +91,7 @@ const RoleSave = ({ onRoleAdded, editingRole, setEditingRole }) => {
         setFormData({
             role: '',
             description: ''
-        })
+        })  
         setEditingRole(null);
     }
 

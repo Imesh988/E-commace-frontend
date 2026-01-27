@@ -35,3 +35,12 @@ export const superAdminApi = {
     deleteSuperAdmin: (superAdminId) => httpRequest.delete(`/superAdmin/delete/${superAdminId}`),
     superAdminLogin: (superAdmin) => httpRequest.post("/super-admin/login", superAdmin),
 }
+
+export const sellerApi = {
+    createSeller: (seller) => httpRequest.post("/seller/create", seller),
+    getAllSeller: () => httpRequest.get("/seller/all"),
+    getSellerById: (sellerId) => httpRequest.get(`/seller/id/${sellerId}`),
+    getSellerByText: (text) => httpRequest.get(`/seller/text/${text}`),
+    updateSeller: (seller, sellerId) => httpRequest.put(`/seller/update/${sellerId}`, seller),
+    deleteSeller: (sellerId) => httpRequest.delete(`/seller/delete/${sellerId}`),
+}

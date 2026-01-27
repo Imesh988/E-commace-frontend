@@ -7,7 +7,8 @@ import RoleForm from "./forms/RoleForm";
 import SuperAdminRegister from "./pages/SuperAdminRegister";
 import SuperAdminForm from "./forms/SuperAdminForm";
 import Navbar from "./layout/Navbar";
-
+import SellerSave from "./pages/SellerSave";
+import SellerForm from "./forms/SellerForm";
 
 
 
@@ -23,6 +24,8 @@ function App() {
                 <Route path="/superAdmin" element={<SuperAdminRegister />} />
                 <Route path="/superAdminForm" element={<SuperAdminForm />} />
                 <Route path="/navbar" element={<Navbar />} />
+                <Route path="/seller" element={<SellerSave />} />
+                <Route path="/sellerForm" element={<SellerForm />} />
             </Routes>
         </Router>
     );

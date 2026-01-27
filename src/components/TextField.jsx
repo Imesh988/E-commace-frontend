@@ -11,7 +11,11 @@ const TextField = ({label , type , name , value , onChange , placeholder , requi
                 onChange={onChange}
                 placeholder={placeholder}
                 required={required}
-                className="w-full py-2 bg-transparent border-b border-gray-200 focus:border-emerald-500 outline-none transition-all"
+                  className={`w-full py-2 bg-transparent border-b outline-none transition-all ${
+                    props.disabled 
+                    ? 'border-gray-100 text-gray-300 cursor-not-allowed italic'
+                    : 'border-gray-200 focus:border-emerald-500 text-gray-700'  
+                }`}
                 {...props}
             />
             {error && <span className="text-[10px] text-red-500 mt-1">{error}</span>}
@@ -19,4 +23,4 @@ const TextField = ({label , type , name , value , onChange , placeholder , requi
     )
 }
 
-export default TextField
+export default TextField;
