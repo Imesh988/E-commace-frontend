@@ -9,6 +9,7 @@ import SuperAdminForm from "./forms/SuperAdminForm";
 import Navbar from "./layout/Navbar";
 import SellerSave from "./pages/SellerSave";
 import SellerForm from "./forms/SellerForm";
+import SupplierSave from "./pages/SupplierSave";
 
 
 
@@ -26,6 +27,7 @@ function App() {
                 <Route path="/navbar" element={<Navbar />} />
                 <Route path="/seller" element={<SellerSave />} />
                 <Route path="/sellerForm" element={<SellerForm />} />
+                <Route path="/supplier" element={<SupplierSave />} />
             </Routes>
         </Router>
     );

@@ -44,3 +44,12 @@ export const sellerApi = {
     updateSeller: (seller, sellerId) => httpRequest.put(`/seller/update/${sellerId}`, seller),
     deleteSeller: (sellerId) => httpRequest.delete(`/seller/delete/${sellerId}`),
 }
+
+export const supplierApi = {
+    createSupplier: (supplier) => httpRequest.post("/supplier/create", supplier),
+    getAllSupplier: () => httpRequest.get("/supplier/all"),
+    getSupplierById: (supplierId) => httpRequest.get(`/supplier/id/${supplierId}`),
+    getSupplierByText: (text) => httpRequest.get(`/supplier/text/${text}`),
+    updateSupplier: (supplier, supplierId) => httpRequest.put(`/supplier/update/${supplierId}`, supplier),
+    deleteSupplier: (supplierId) => httpRequest.delete(`/supplier/delete/${supplierId}`),
+}
