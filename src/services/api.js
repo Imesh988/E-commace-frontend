@@ -53,3 +53,13 @@ export const supplierApi = {
     updateSupplier: (supplier, supplierId) => httpRequest.put(`/supplier/update/${supplierId}`, supplier),
     deleteSupplier: (supplierId) => httpRequest.delete(`/supplier/delete/${supplierId}`),
 }
+
+export const sellerHasRoleApi = {
+    createSellerHasRole: (sellerHasRole) => httpRequest.post("/sellerHasRole/create", sellerHasRole),
+    getAllSellerhasRole: () => httpRequest.get("/sellerHasRole/all"),
+    getSellerhasRoleById: (sellerHasRoleId) => httpRequest.get("/sellerHasRole/id" , sellerHasRoleId),
+    getSellerhasRoleByText: (text) => httpRequest.get(`/sellerHasRole/search/${text}`),
+    updateSellerhasRole: (sellerHasRole, sellerHasRoleId)  => httpRequest.put(`/sellerHasRole/update/${sellerHasRoleId}`, sellerHasRole),
+    deleteSellerHasRole: (sellerHasRoleId) => httpRequest.delete(`/sellerHasRole/delete/${sellerHasRoleId}`)
+
+}

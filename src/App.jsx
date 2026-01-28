@@ -11,6 +11,9 @@ import SellerSave from "./pages/SellerSave";
 import SellerForm from "./forms/SellerForm";
 import SupplierSave from "./pages/SupplierSave";
 import SupplierForm from "./forms/SupplierForm";
+import SellerhasRoleSave from "./pages/SellerHasRoleSave";
+import SellerhasRoleForm from "./forms/SellerhasRoleForm";
+
 
 
 
@@ -30,6 +33,8 @@ function App() {
                 <Route path="/sellerForm" element={<SellerForm />} />
                 <Route path="/supplier" element={<SupplierSave />} />
                 <Route path="/supplierForm" element={<SupplierForm />} />
+                 <Route path="/sellerHasRole" element={<SellerhasRoleSave />} />
+                 <Route path="/sellerHasRoleForm" element={<SellerhasRoleForm />} />
             </Routes>
         </Router>
     );
