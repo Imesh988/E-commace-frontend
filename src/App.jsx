@@ -10,6 +10,7 @@ import Navbar from "./layout/Navbar";
 import SellerSave from "./pages/SellerSave";
 import SellerForm from "./forms/SellerForm";
 import SupplierSave from "./pages/SupplierSave";
+import SupplierForm from "./forms/SupplierForm";
 
 
 
@@ -28,6 +29,7 @@ function App() {
                 <Route path="/seller" element={<SellerSave />} />
                 <Route path="/sellerForm" element={<SellerForm />} />
                 <Route path="/supplier" element={<SupplierSave />} />
+                <Route path="/supplierForm" element={<SupplierForm />} />
             </Routes>
         </Router>
     );

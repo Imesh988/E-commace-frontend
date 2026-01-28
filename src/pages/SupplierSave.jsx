@@ -15,7 +15,7 @@ const SupplierSave = ({ onSupplierAdded, editingSupplier, setEditingSupplier }) 
         status: 1,
     });
 
-const [sellers, setSellers] = useState([]);
+    const [sellers, setSellers] = useState([]);
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
@@ -36,91 +36,92 @@ const [sellers, setSellers] = useState([]);
         }
 
         fetachSeller();
-    },[])
+    }, [])
 
-     const validation = () => {
+    const validation = () => {
         let newErrors = {};
 
-       if(!formData.seller_id){
-        newErrors.seller_id = "please enter the seller id"
-       }
+        if (!formData.seller_id) {
+            newErrors.seller_id = "please enter the seller id"
+        }
 
-       if(!formData.supplier_name.length < 3){
+        if (formData.supplier_name.length < 3) {
             newErrors.supplier_name = "supplier name must be at least 3 characters"
-       }
+        }
 
-       if(!formData.address){
-        newErrors.address = "please enter the address"
-       }
+        if (!formData.address) {
+            newErrors.address = "please enter the address"
+        }
 
-       if(!formData.tel_no){
-        newErrors.tel_no = "please enter the tel no"
-       }
+        if (!formData.tel_no) {
+            newErrors.tel_no = "please enter the tel no"
+        }
 
-        setErrors(newErrors); 
-        return Object.keys(newErrors).length === 0; 
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
-     useEffect(() => {
-            if (editingSupplier) {
-                const sanitizedData = {};
-                Object.keys(editingSupplier).forEach(key => {
-                    sanitizedData[key] = editingSupplier[key] === null ? "" : editingSupplier[key];
-                });
-                setFormData(sanitizedData);
-            }
-        }, [editingSupplier]);
+    useEffect(() => {
+        if (editingSupplier) {
+            const sanitizedData = {};
+            Object.keys(editingSupplier).forEach(key => {
+                sanitizedData[key] = editingSupplier[key] === null ? "" : editingSupplier[key];
+            });
+            setFormData(sanitizedData);
+        }
+    }, [editingSupplier]);
 
-        const handleChange = (e) => {
+    const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
-        
+
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: null }));
         }
     };
 
     const handleSubmit = async (e) => {
-            e.preventDefault();
-        
-            // if (!validation()) return;
-            //     setLoading(true);
-            
-            try {
-                if (editingSupplier) {
-                    await supplierApi.updateSupplier(formData, editingSupplier.supplier_id);
-                    alert('Supplier updated successfully!');
-                } else {
-                    await supplierApi.createSupplier(formData);
-                    alert('Supplier registered successfully!');
-                }
-        
-                handleReset();
-                onSupplierAdded();
-        
-            } catch (error) {
-                console.error("Error details:", error);
-                
-                alert('Internal server error !!');
-                
-            } finally {
-                setLoading(false);
+        e.preventDefault();
+
+        if (!validation()) return;
+        setLoading(true);
+
+        try {
+            if (editingSupplier) {
+                alert('1');
+                await supplierApi.updateSupplier(formData, editingSupplier.supplier_id);
+                alert('Supplier updated successfully!');
+            } else {
+                await supplierApi.createSupplier(formData);
+                alert('Supplier registered successfully!');
             }
-        }
 
-        const handleReset = () => {
-            setFormData({
-                seller_id: '',
-                supplier_name: '',
-                address: '',
-                tel_no: '',
-                status: 1,
-            })
-            setEditingSupplier(null)
-            setErrors({})
-        }
+            handleReset();
+            onSupplierAdded();
 
-        return (
+        } catch (error) {
+            console.error("Error details:", error);
+
+            alert('Internal server error !!');
+
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const handleReset = () => {
+        setFormData({
+            seller_id: '',
+            supplier_name: '',
+            address: '',
+            tel_no: '',
+            status: 1,
+        })
+        setEditingSupplier(null)
+        setErrors({})
+    }
+
+    return (
         <div className="relative z-10 w-full max-w-5xl bg-white backdrop-blur-2xl shadow-2xl rounded-[40px] p-12 border border-white mx-auto">
             <div className="flex items-center gap-4 mb-12">
                 <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200">
@@ -167,8 +168,8 @@ const [sellers, setSellers] = useState([]);
                         placeholder="07xxxxxxxx"
                         error={errors.tel_no}
                     />
-                   
-                  
+
+
                 </div>
 
                 <div className="flex justify-end gap-4 mt-4">

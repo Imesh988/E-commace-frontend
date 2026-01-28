@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import DataTabale from "../components/DataTable";
 import { sellerApi } from "../services/api";
 import { CiEdit, CiSearch, CiTrash } from "react-icons/ci";
-import { FaUser } from "react-icons/fa";
 import Navbar from "../layout/Navbar";
 import SellerSave from "../pages/SellerSave";
 import { TbUser } from "react-icons/tb";
