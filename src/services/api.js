@@ -63,3 +63,23 @@ export const sellerHasRoleApi = {
     deleteSellerHasRole: (sellerHasRoleId) => httpRequest.delete(`/sellerHasRole/delete/${sellerHasRoleId}`)
 
 }
+
+export const stockApi = {
+    createStock: (stock) => httpRequest.post("/stock/create", stock),
+    getAllStock: () => httpRequest.get("/stock/all"),
+    getStockById: (stockId) => httpRequest.get(`/stock/id/${stockId}`),
+    getStockByText: (text) => httpRequest.get(`/stock/text/${text}`),
+    updateStock: (stock, stockId) => httpRequest.put(`/stock/update/${stockId}`, stock),
+    deleteStock: (stockId) => httpRequest.delete(`/stock/delete/${stockId}`)
+    
+}
+
+
+export const grnApi = {
+     createGrn: (grn) => httpRequest.post("/grn/create", grn),
+    getAllGrn: () => httpRequest.get("/grn/all"),
+    getGrnById: (grnId) => httpRequest.get(`/grn/id/${grnId}`),
+    getGrnByText: (text) => httpRequest.get(`/grn/text/${text}`),
+    updateGrn: (grn, grnId) => httpRequest.put(`/grn/update/${grnId}`, grn),
+    deleteGrn: (grnId) => httpRequest.delete(`/grn/delete/${grnId}`)
+}

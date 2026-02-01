@@ -19,33 +19,33 @@ const SellerhasRoleSave = ({ onSellerHasRole, editingSellerHasRole, setEditingSe
     const [loading, setLoading] = useState(false);
 
 
-    useEffect(() => {
-        const fetachSellerAndRole = async () => {
-            try {
-                const res = await sellerApi.getAllSeller();
-                const data = res.data && res.data.data ? res.data.data : [];
-                const options = data.map((item) => ({
-                    value: item.seller_id,
-                    label: item.seller_name,
-                }));
-                const resRole = await roleApi.getAllRole();
-                const dataRole = resRole.data && resRole.data.data ? resRole.data.data : [];
-                const optionsRole = dataRole.map((item) => ({
-                    value: item.role_id,
-                    label: item.role,
-                }));
-                
-                setSellers(options);
-                setRole(optionsRole)
+        useEffect(() => {
+            const fetachSellerAndRole = async () => {
+                try {
+                    const res = await sellerApi.getAllSeller();
+                    const data = res.data && res.data.data ? res.data.data : [];
+                    const options = data.map((item) => ({
+                        value: item.seller_id,
+                        label: item.seller_name,
+                    }));
+                    const resRole = await roleApi.getAllRole();
+                    const dataRole = resRole.data && resRole.data.data ? resRole.data.data : [];
+                    const optionsRole = dataRole.map((item) => ({
+                        value: item.role_id,
+                        label: item.role,
+                    }));
+                    
+                    setSellers(options);
+                    setRole(optionsRole)
 
-                
-            } catch (error) {
-                console.log("Error fetching super admins:", error);
+                    
+                } catch (error) {
+                    console.log("Error fetching super admins:", error);
+                }
             }
-        }
 
-        fetachSellerAndRole();
-    }, [])
+            fetachSellerAndRole();
+        }, [])
 
     const validation = () => {
 
@@ -53,7 +53,7 @@ const SellerhasRoleSave = ({ onSellerHasRole, editingSellerHasRole, setEditingSe
         if (!formData.id) {
             newErrors.id = "please enter the id"
         }
-
+        
         if (!formData.role_id) {
             newErrors.role_id = "please select the role"
         }

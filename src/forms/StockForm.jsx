@@ -1,30 +1,31 @@
 import React, { useState, useEffect } from "react";
 import DataTabale from "../components/DataTable";
+import { stockApi } from "../services/api";
 import { CiEdit, CiSearch, CiTrash } from "react-icons/ci";
 import Navbar from "../layout/Navbar";
-import { sellerHasRoleApi } from "../services/api";
-import SellerHasRoleSave from "../pages/SellerHasRoleSave";
-import { RiUser5Fill } from "react-icons/ri";
+import StockSave from "../pages/StockSave";
+import { TbUser } from "react-icons/tb";
 
-const SellerhasRoleForm = () => {
-    const [sellerHasRole, setSellerHasRole] = useState([]);
+const StockForm = () => {
+    const [stocks, setStocks] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    const [editingSellerHasRole, setEditingSellerHasRole] = useState(null);
+    const [editingStock, setEditingStock] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
 
-    const fetchSellerhasRole = async () => {
+
+    const fetchStocks = async () => {
         setLoading(true);
         try {
             const request = searchTerm.trim() === ""
-                ? await sellerHasRoleApi.getAllSellerhasRole()
-                : await sellerHasRoleApi.getSellerhasRoleByText(searchTerm);
+                ? await stockApi.getAllStock()
+                : await stockApi.getStockByText(searchTerm);
 
             const receivedData = request.data?.data || request.data || [];
-            setSellerHasRole(receivedData);
+            setStocks(receivedData);
         } catch (err) {
             console.log("Search error:", err);
-            setSellerHasRole([]);
+            setStocks([]);
         } finally {
             setLoading(false);
         }
@@ -32,29 +33,27 @@ const SellerhasRoleForm = () => {
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
-            fetchSellerhasRole();
+            fetchStocks();
         }, 500);
 
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 
-    const sellerHasRoleDelete = async (id) => {
+    const stockDelete = async (id) => {
 
-      
 
         if (window.confirm('Are you sure you want to delete this seller?')) {
             try {
                 setLoading(true);
-                console.log(id);
+                const response = await stockApi.deleteStock(id);
 
-                const response = await sellerHasRoleApi.deleteSellerHasRole(id);
                 console.log("Delete Response:", response);
                 alert("   deleted successfully!");
-                fetchSellerhasRole();
+                fetchStocks();
 
             } catch (error) {
                 console.error("Delete Error details:", error);
-                const msg = error.response?.data?.message || "Seller Has Role Delete Failed !!!";
+                const msg = error.response?.data?.message || "Super Admin Delete Failed !!!";
                 alert(msg);
             } finally {
                 setLoading(false);
@@ -62,36 +61,39 @@ const SellerhasRoleForm = () => {
         }
     }
 
-    const sellerHasRoleColumns = [
 
+    const stockColumns = [
+
+        // {
+        //     header: "Seller id",
+        //     key: "seller_id"
+        // },
         {
             header: "Seller Id ",
             key: "seller_name"
         },
         {
-            header: "Role Id",
-            key: "role"
+            header: "GRN",
+            key: "grn_id"
         },
-
+        {
+            header: "Quentity",
+            key: "qty"
+        },
 
         {
             header: "Actions",
             render: (row) => (
-
                 <div className="flex justify-center gap-3">
                     <button
-                        onClick={() => {
-
-                            console.log("Row Data:", row);
-                            setEditingSellerHasRole(row)
-                        }}
+                        onClick={() => setEditingStock(row)}
                         className="p-2 text-yellow-400 hover:bg-yellow-100 rounded-full transition"
                         title="Edit"
                     >
                         <CiEdit size={24} className="text-yellow-500" />
                     </button>
                     <button
-                        onClick={() => sellerHasRoleDelete(row.id)}
+                        onClick={() => stockDelete(row.id)}
                         className="p-2 text-red-600 hover:bg-red-100 rounded-full transition"
                         title="Delete"
                     >
@@ -104,11 +106,11 @@ const SellerhasRoleForm = () => {
     ]
 
     useEffect(() => {
-        fetchSellerhasRole();
+        fetchStocks();
     }, [searchTerm]);
 
     return (
-            <>
+          <>
        <Navbar />
         <div className="relative min-h-screen bg-white overflow-x-hidden p-6 mt-5">
           
@@ -117,10 +119,10 @@ const SellerhasRoleForm = () => {
 
             <div className="relative z-10 flex flex-col gap-12 items-center">
 
-                <SellerHasRoleSave
-                    onSellerHasRole={fetchSellerhasRole}
-                    editingSellerHasRole={editingSellerHasRole}
-                    setEditingSellerHasRole={setEditingSellerHasRole}
+                <StockSave
+                    onStockAdded={fetchStocks}
+                    editingStock={editingStock}
+                    setEditingStock={setEditingStock}
                 />
 
                 <div className="w-full ">
@@ -128,13 +130,13 @@ const SellerhasRoleForm = () => {
                     <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6 px-6">
 
                         <h2 className="text-3xl font-bold text-green-600 flex items-center gap-3">
-                            <RiUser5Fill />
-                            <span>Seller Has Role Management</span>
+                            <TbUser />
+                            <span>Stock Management</span>
                         </h2>
 
                         <div className="relative w-full md:w-96 group">
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <RiUser5Fill className="h-6 w-6 text-emerald-500 font-bold" />
+                                <TbUser className="h-6 w-6 text-emerald-500 font-bold" />
                             </div>
                             <input
                                 type="text"
@@ -147,10 +149,9 @@ const SellerhasRoleForm = () => {
                     </div>
                     <div className="backdrop-blur-xl p-8 overflow-hidden">
                         <DataTabale
-                         columns={sellerHasRoleColumns} 
-                         data={sellerHasRole} />
+                         columns={stockColumns} 
+                         data={stocks} />
                     </div>
-                    
 
                 </div>
             </div>
@@ -158,8 +159,6 @@ const SellerhasRoleForm = () => {
 
        </>
     )
-
-
 }
 
-export default SellerhasRoleForm;
+export default StockForm;
