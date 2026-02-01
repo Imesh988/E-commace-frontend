@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom"; 
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import UserRegister from "./pages/UserRegister";
 import UserForm from "./forms/UserForm";
 import RoleSave from "./pages/RoleSave";
@@ -15,6 +15,8 @@ import SellerhasRoleSave from "./pages/SellerHasRoleSave";
 import SellerhasRoleForm from "./forms/SellerhasRoleForm";
 import StockSave from "./pages/StockSave";
 import StockForm from "./forms/StockForm";
+import GRNSave from "./pages/GrnSave";
+import GrnForm from "./forms/GrnForm";
 
 
 
@@ -23,9 +25,9 @@ import StockForm from "./forms/StockForm";
 
 function App() {
     return (
-        <Router> 
+        <Router>
             <Routes>
-                
+
                 <Route path="/" element={<UserRegister />} />
                 <Route path="/user" element={<UserForm />} />
                 <Route path="/role" element={<RoleSave />} />
@@ -37,10 +39,13 @@ function App() {
                 <Route path="/sellerForm" element={<SellerForm />} />
                 <Route path="/supplier" element={<SupplierSave />} />
                 <Route path="/supplierForm" element={<SupplierForm />} />
-                 <Route path="/sellerHasRole" element={<SellerhasRoleSave />} />
-                 <Route path="/sellerHasRoleForm" element={<SellerhasRoleForm />} />
-                 <Route path="/stock" element={<StockSave />} />
-                 <Route path="/stockForm" element={<StockForm />} />
+                <Route path="/sellerHasRole" element={<SellerhasRoleSave />} />
+                <Route path="/sellerHasRoleForm" element={<SellerhasRoleForm />} />
+                <Route path="/stock" element={<StockSave />} />
+                <Route path="/stockForm" element={<StockForm />} />
+                <Route path="/grnPage" element={<GRNSave />} />
+                <Route path="/grnForm" element={<GrnForm />} />
+
             </Routes>
         </Router>
     );

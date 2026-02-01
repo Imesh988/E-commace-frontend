@@ -17,7 +17,7 @@ export const userApi = {
 }
 
 
-export const roleApi ={
+export const roleApi = {
     createRole: (role) => httpRequest.post("/role/create", role),
     getAllRole: () => httpRequest.get("/role/all"),
     getRoleById: (roleId) => httpRequest.get(`/role/id/${roleId}`),
@@ -57,9 +57,9 @@ export const supplierApi = {
 export const sellerHasRoleApi = {
     createSellerHasRole: (sellerHasRole) => httpRequest.post("/sellerHasRole/create", sellerHasRole),
     getAllSellerhasRole: () => httpRequest.get("/sellerHasRole/all"),
-    getSellerhasRoleById: (sellerHasRoleId) => httpRequest.get("/sellerHasRole/id" , sellerHasRoleId),
+    getSellerhasRoleById: (sellerHasRoleId) => httpRequest.get("/sellerHasRole/id", sellerHasRoleId),
     getSellerhasRoleByText: (text) => httpRequest.get(`/sellerHasRole/search/${text}`),
-    updateSellerhasRole: (sellerHasRole, sellerHasRoleId)  => httpRequest.put(`/sellerHasRole/update/${sellerHasRoleId}`, sellerHasRole),
+    updateSellerhasRole: (sellerHasRole, sellerHasRoleId) => httpRequest.put(`/sellerHasRole/update/${sellerHasRoleId}`, sellerHasRole),
     deleteSellerHasRole: (sellerHasRoleId) => httpRequest.delete(`/sellerHasRole/delete/${sellerHasRoleId}`)
 
 }
@@ -71,15 +71,24 @@ export const stockApi = {
     getStockByText: (text) => httpRequest.get(`/stock/text/${text}`),
     updateStock: (stock, stockId) => httpRequest.put(`/stock/update/${stockId}`, stock),
     deleteStock: (stockId) => httpRequest.delete(`/stock/delete/${stockId}`)
-    
+
 }
 
 
 export const grnApi = {
-     createGrn: (grn) => httpRequest.post("/grn/create", grn),
+    createGrn: (grn) => httpRequest.post("/grn/create", grn),
     getAllGrn: () => httpRequest.get("/grn/all"),
     getGrnById: (grnId) => httpRequest.get(`/grn/id/${grnId}`),
     getGrnByText: (text) => httpRequest.get(`/grn/text/${text}`),
     updateGrn: (grn, grnId) => httpRequest.put(`/grn/update/${grnId}`, grn),
     deleteGrn: (grnId) => httpRequest.delete(`/grn/delete/${grnId}`)
+}
+
+export const productApi = {
+    createProduct: (product) => httpRequest.post("/product/create", product),
+    getAllProduct: () => httpRequest.get("/product/all"),
+    getProductById: (productId) => httpRequest.get(`/product/id/${grnId}`),
+    getProductByText: (text) => httpRequest.get(`/product/text/${text}`),
+    updateProduct: (product, productId) => httpRequest.put(`/product/update/${productId}`, product),
+    deleteGrn: (productId) => httpRequest.delete(`/product/delete/${productId}`)
 }

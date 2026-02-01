@@ -1,32 +1,31 @@
 import React, { useState, useEffect } from "react";
 import DataTabale from "../components/DataTable";
-import { stockApi } from "../services/api";
 import { CiEdit, CiSearch, CiTrash } from "react-icons/ci";
 import Navbar from "../layout/Navbar";
-import StockSave from "../pages/StockSave";
-import { AiOutlineStock } from "react-icons/ai";
+import { GrNodes } from "react-icons/gr";
+import { grnApi } from "../services/api";
+import GRNSave from "../pages/GrnSave";
 
 
-const StockForm = () => {
-    const [stocks, setStocks] = useState([]);
+const GrnForm = () => {
+    const [grn, setGrn] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    const [editingStock, setEditingStock] = useState(null);
+    const [editingGrn, setEditingGrn] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
 
-
-    const fetchStocks = async () => {
+    const fetchGrn = async () => {
         setLoading(true);
         try {
             const request = searchTerm.trim() === ""
-                ? await stockApi.getAllStock()
-                : await stockApi.getStockByText(searchTerm);
+                ? await grnApi.getAllGrn()
+                : await grnApi.getGrnByText(searchTerm);
 
             const receivedData = request.data?.data || request.data || [];
-            setStocks(receivedData);
+            setGrn(receivedData);
         } catch (err) {
             console.log("Search error:", err);
-            setStocks([]);
+            setGrn([]);
         } finally {
             setLoading(false);
         }
@@ -34,27 +33,28 @@ const StockForm = () => {
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
-            fetchStocks();
+            fetchGrn();
         }, 500);
 
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 
-    const stockDelete = async (id) => {
+
+    const grnDelete = async (id) => {
 
 
-        if (window.confirm('Are you sure you want to delete this seller?')) {
+        if (window.confirm('Are you sure you want to delete this grn?')) {
             try {
                 setLoading(true);
-                const response = await stockApi.deleteStock(id);
+                const response = await grnApi.deleteGrn(id);
 
                 console.log("Delete Response:", response);
                 alert("   deleted successfully!");
-                fetchStocks();
+                fetchGrn();
 
             } catch (error) {
                 console.error("Delete Error details:", error);
-                const msg = error.response?.data?.message || "Super Admin Delete Failed !!!";
+                const msg = error.response?.data?.message || "GRN Delete Failed !!!";
                 alert(msg);
             } finally {
                 setLoading(false);
@@ -62,56 +62,67 @@ const StockForm = () => {
         }
     }
 
-
-    const stockColumns = [
-
-        // {
-        //     header: "Seller id",
-        //     key: "seller_id"
-        // },
-        {
-            header: "Seller Id ",
-            key: "seller_name"
-        },
-        {
-            header: "GRN",
-            key: "grn_id"
-        },
-        {
-            header: "Quentity",
-            key: "qty"
-        },
-
-        {
-            header: "Actions",
-            render: (row) => (
-                <div className="flex justify-center gap-3">
-                    <button
-                        onClick={() => setEditingStock(row)}
-                        className="p-2 text-yellow-400 hover:bg-yellow-100 rounded-full transition"
-                        title="Edit"
-                    >
-                        <CiEdit size={24} className="text-yellow-500" />
-                    </button>
-                    <button
-                        onClick={() => stockDelete(row.id)}
-                        className="p-2 text-red-600 hover:bg-red-100 rounded-full transition"
-                        title="Delete"
-                    >
-                        <CiTrash size={24} />
-                    </button>
-                </div>
-            )
+   const grnColumns = [
+    {
+        header: " Supplier ",
+        key: "supplier_name"
+    },
+    {
+        header: "product",
+        key: "product_name"
+    },
+    {
+        header: "Date",
+        render: (row) => {
+            if (!row.date) return "N/A";
+            return row.date.split('T')[0]; 
         }
+    },
+    {
+        header: "Quentity ",
+        key: "qty"
+    },
+    {
+        header: "Cost Price",
+        key: "cost_price"
+    },
+    {
+        header: "Sell Price",
+        key: "sell_price"
+    },
+    {
+        header: "Total",
+        key: "total"
+    },
+    {
+        header: "Actions",
+        render: (row) => (
+            <div className="flex justify-center gap-3">
+                <button
+                    onClick={() => setEditingGrn(row)}
+                    className="p-2 text-yellow-400 hover:bg-yellow-100 rounded-full transition"
+                    title="Edit"
+                >
+                    <CiEdit size={24} className="text-yellow-500" />
+                </button>
+                <button
+                    onClick={() => grnDelete(row.id)}
+                    className="p-2 text-red-600 hover:bg-red-100 rounded-full transition"
+                    title="Delete"
+                >
+                    <CiTrash size={24} />
+                </button>
+            </div>
+        )
+    }
+];
 
-    ]
+      useEffect(() => {
+            fetchGrn();
+        }, [searchTerm]);
 
-    useEffect(() => {
-        fetchStocks();
-    }, [searchTerm]);
-
-    return (
-          <>
+        return (
+               <>
        <Navbar />
         <div className="relative min-h-screen bg-white overflow-x-hidden p-6 mt-5">
           
@@ -120,10 +131,10 @@ const StockForm = () => {
 
             <div className="relative z-10 flex flex-col gap-12 items-center">
 
-                <StockSave
-                    onStockAdded={fetchStocks}
-                    editingStock={editingStock}
-                    setEditingStock={setEditingStock}
+                <GRNSave
+                    onGrnAdded={fetchGrn}
+                    editingGrn={editingGrn}
+                    setEditingGrn={setEditingGrn}
                 />
 
                 <div className="w-full ">
@@ -131,13 +142,13 @@ const StockForm = () => {
                     <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6 px-6">
 
                         <h2 className="text-3xl font-bold text-green-600 flex items-center gap-3">
-                            <AiOutlineStock />
-                            <span>Stock Management</span>
+                            <GrNodes />
+                            <span>Grn Management</span>
                         </h2>
 
                         <div className="relative w-full md:w-96 group">
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <AiOutlineStock className="h-6 w-6 text-emerald-500 font-bold" />
+                                <GrNodes className="h-6 w-6 text-emerald-500 font-bold" />
                             </div>
                             <input
                                 type="text"
@@ -150,8 +161,8 @@ const StockForm = () => {
                     </div>
                     <div className="backdrop-blur-xl p-8 overflow-hidden">
                         <DataTabale
-                         columns={stockColumns} 
-                         data={stocks} />
+                         columns={grnColumns} 
+                         data={grn} />
                     </div>
 
                 </div>
@@ -159,7 +170,8 @@ const StockForm = () => {
         </div>
 
        </>
-    )
+        )
+
 }
 
-export default StockForm;
+export default GrnForm; 
