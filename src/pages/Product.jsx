@@ -90,6 +90,7 @@ export const Product = () => {
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead className="border-b text-gray-500 uppercase">
+                            <tr>
                                 <th className="px-4 py-3 text-left">Product Id</th>
                                 <th className="px-4 py-3 text-left">Product Code</th>
                                 <th className="px-4 py-3 text-left">Product</th>
@@ -97,6 +98,8 @@ export const Product = () => {
                                 <th className="px-4 py-3 text-left">Price</th>
                                 <th className="px-4 py-3 text-left">Product colors</th>
                                 <th className="px-4 py-3 text-left">Action</th>
+                            </tr>
+                                
                         </thead>
                         <tbody>
                             {

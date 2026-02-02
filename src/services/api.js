@@ -1,6 +1,7 @@
 import axios from "axios";
 
 
+
 const httpRequest = axios.create({
     baseURL: "http://localhost:5000/api/v1"
 
@@ -52,3 +53,14 @@ export const productAPI = {
     updateProduct: (productId, productData) => httpRequest.put(`/product/update/${productId}`, productData),
     deleteProduct: (productId) => httpRequest.put(`/product/delete/${productId}`),
 };
+
+export const discountAPI = {
+    createProductDiscount: (discount) => httpRequest.post("/product-discount/create", discount),
+    getAllProductDiscount: () => httpRequest.get("/product-discount/all"),
+    getProductDiscountByText: (text) => httpRequest.get(`/product-discount/search/${text}`),
+    getSeachByProductId: (productId) => httpRequest.get(`/product-discount/id/${productId}`),
+    getProductDiscountById: (discountId) => httpRequest.get(`/product-discount/id/${discountId}`),
+    updateProductDiscount: (discountId, discountData) => httpRequest.put(`/product-discount/update/${discountId}`, discountData),
+    deleteProductDiscount: (discountId) => httpRequest.delete(`/product-discount/delete/${discountId}`),
+
+}

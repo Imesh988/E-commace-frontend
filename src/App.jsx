@@ -11,6 +11,10 @@ import CategoryForm from "./forms/CategoryForm";
 import  { Category }  from "./pages/Category";
 import { ProductForm } from "./forms/ProductForm";
 import { Product } from "./pages/Product";
+import { ProductDiscountForm } from "./forms/ProductDiscountForm";
+import { Toaster } from "react-hot-toast";
+import { ProductDiscount } from "./pages/ProductDiscount";
+
 
 
 
@@ -18,8 +22,9 @@ import { Product } from "./pages/Product";
 function App() {
     return (
         <Router> 
+            <Toaster position="top-right" />
             <Routes>
-                
+            
                 <Route path="/" element={<UserRegister />} />
                 <Route path="/user" element={<UserForm />} />
                 <Route path="/role" element={<RoleSave />} />
@@ -31,6 +36,9 @@ function App() {
                 <Route path="/category" element={<Category />} />
                 <Route path="/productForm" element={<ProductForm />} />
                 <Route path="/product" element={<Product/>} />
+                <Route path="/productForm" element={<ProductForm />} />
+                <Route path="/productDiscountForm" element={<ProductDiscountForm />} />
+                <Route path="/productDiscount" element={<ProductDiscount />} />
 
 
             </Routes>
