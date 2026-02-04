@@ -17,6 +17,10 @@ import StockSave from "./pages/StockSave";
 import StockForm from "./forms/StockForm";
 import GRNSave from "./pages/GrnSave";
 import GrnForm from "./forms/GrnForm";
+import { UserDashboard } from "./pages/UserDashboard";
+import { SuperAdminDashboard } from "./pages/SuperAdminDashboard";
+import Login from "./components/login";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 
 
@@ -45,7 +49,19 @@ function App() {
                 <Route path="/stockForm" element={<StockForm />} />
                 <Route path="/grnPage" element={<GRNSave />} />
                 <Route path="/grnForm" element={<GrnForm />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/admin-dashboard" element={
+                    <ProtectedRoute allowedRoles={['super_admin']}>
+                        <SuperAdminDashboard />
+                    </ProtectedRoute>
+                } />
 
+                {/* Regular User Only Route */}
+                <Route path="/user-dashboard" element={
+                    <ProtectedRoute allowedRoles={['user']}>
+                        <UserDashboard />
+                    </ProtectedRoute>
+                } />
             </Routes>
         </Router>
     );
