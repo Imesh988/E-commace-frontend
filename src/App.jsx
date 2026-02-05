@@ -17,11 +17,10 @@ import StockSave from "./pages/StockSave";
 import StockForm from "./forms/StockForm";
 import GRNSave from "./pages/GrnSave";
 import GrnForm from "./forms/GrnForm";
-import { UserDashboard } from "./pages/UserDashboard";
-import { SuperAdminDashboard } from "./pages/SuperAdminDashboard";
+import UserDashboard from "./pages/UserDashboard";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import Login from "./components/login";
 import ProtectedRoute from "./components/ProtectedRoute";
-
 
 
 
@@ -34,15 +33,15 @@ function App() {
 
                 <Route path="/" element={<UserRegister />} />
                 <Route path="/user" element={<UserForm />} />
-                <Route path="/role" element={<RoleSave />} />
-                <Route path="/roleForm" element={<RoleForm />} />
-                <Route path="/superAdmin" element={<SuperAdminRegister />} />
-                <Route path="/superAdminForm" element={<SuperAdminForm />} />
+                {/* <Route path="/role" element={<RoleSave />} />
+                <Route path="/roleForm" element={<RoleForm />} /> */}
+                {/* <Route path="/superAdmin" element={<SuperAdminRegister />} />
+                <Route path="/superAdminForm" element={<SuperAdminForm />} /> */}
                 <Route path="/navbar" element={<Navbar />} />
-                <Route path="/seller" element={<SellerSave />} />
-                <Route path="/sellerForm" element={<SellerForm />} />
-                <Route path="/supplier" element={<SupplierSave />} />
-                <Route path="/supplierForm" element={<SupplierForm />} />
+                {/* <Route path="/seller" element={<SellerSave />} /> */}
+                {/* <Route path="/sellerForm" element={<SellerForm />} /> */}
+                {/* <Route path="/supplier" element={<SupplierSave />} />
+                <Route path="/supplierForm" element={<SupplierForm />} /> */}
                 <Route path="/sellerHasRole" element={<SellerhasRoleSave />} />
                 <Route path="/sellerHasRoleForm" element={<SellerhasRoleForm />} />
                 <Route path="/stock" element={<StockSave />} />
@@ -50,14 +49,57 @@ function App() {
                 <Route path="/grnPage" element={<GRNSave />} />
                 <Route path="/grnForm" element={<GrnForm />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/admin-dashboard" element={
+                <Route path="/seller" element={
+                    <ProtectedRoute allowedRoles={['super_admin']}>
+                        <SellerSave />
+                    </ProtectedRoute>
+                } />
+                <Route path="/sellerForm" element={
+                    <ProtectedRoute allowedRoles={['super_admin']}>
+                        <SellerForm />
+                    </ProtectedRoute>
+                } />
+
+                <Route path="/role" element={
+                    <ProtectedRoute allowedRoles={['super_admin']}>
+                        <RoleSave />
+                    </ProtectedRoute>
+                } />
+                <Route path="/roleForm" element={
+                    <ProtectedRoute allowedRoles={['super_admin']}>
+                        <RoleForm />
+                    </ProtectedRoute>
+                } />
+
+                 <Route path="/superAdmin" element={
+                    <ProtectedRoute allowedRoles={['super_admin']}>
+                        <SuperAdminRegister />
+                    </ProtectedRoute>
+                } />
+                <Route path="/superAdminForm" element={
+                    <ProtectedRoute allowedRoles={['super_admin']}>
+                        <SuperAdminForm />
+                    </ProtectedRoute>
+                } />
+
+                 <Route path="/supplier" element={
+                    <ProtectedRoute allowedRoles={['super_admin']}>
+                        <SupplierSave />
+                    </ProtectedRoute>
+                } />
+                <Route path="/supplierForm" element={
+                    <ProtectedRoute allowedRoles={['super_admin']}>
+                        <SupplierForm />
+                    </ProtectedRoute>
+                } />
+
+                <Route path="/super-admin/dashboard" element={
                     <ProtectedRoute allowedRoles={['super_admin']}>
                         <SuperAdminDashboard />
                     </ProtectedRoute>
                 } />
 
-                {/* Regular User Only Route */}
-                <Route path="/user-dashboard" element={
+                <Route path="/user/dashboard" element={
                     <ProtectedRoute allowedRoles={['user']}>
                         <UserDashboard />
                     </ProtectedRoute>

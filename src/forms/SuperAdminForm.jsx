@@ -4,7 +4,7 @@ import SuperAdminRegister from "../pages/SuperAdminRegister";
 import { superAdminApi } from "../services/api";
 import DataTabale from "../components/DataTable";
 import { CiEdit, CiTrash } from "react-icons/ci";
-import Navbar from "../layout/Navbar";
+import SuperAdminNavbar from "../layout/SuperadminNav";
 
 
 const SuperAdminForm = () => {
@@ -13,6 +13,7 @@ const SuperAdminForm = () => {
 
     const [editingSuperAdmin, setEditingSuperAdmin] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [profile, setProfile] = useState(null);
 
     const fetchSuperAdmins = async () => {
         setLoading(true);
@@ -53,6 +54,11 @@ const SuperAdminForm = () => {
             }
         }
     }
+
+      const handleLogout = () => {
+    localStorage.clear();
+    window.location.href = '/login';
+  };
 
     const superAdminColumns = [
 
@@ -101,7 +107,7 @@ const SuperAdminForm = () => {
     return (
         
        <>
-       <Navbar />
+      <SuperAdminNavbar onLogout={handleLogout} profile={profile} />
         <div className="relative min-h-screen bg-white overflow-x-hidden p-6 mt-5">
           
             <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-100 rounded-full blur-[120px] opacity-60 pointer-events-none"></div>

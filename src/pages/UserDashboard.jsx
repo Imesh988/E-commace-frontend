@@ -1,10 +1,17 @@
-import React from 'react';
+import React,{useEffect} from 'react';
+import axiosInstance from '../api/axiosConfig';
 
-export const UserDashboard = () => {
+ const UserDashboard = () => {
     const handleLogout = () => {
         localStorage.clear();
         window.location.href = '/login';
     };
+
+    useEffect(() => {
+    axiosInstance.get('/auth/verify-profile')
+        .then(res => console.log(res))
+        .catch(err => console.log(err)); 
+}, []);
 
     return (
         <div style={{ padding: '20px' }}>
@@ -14,3 +21,5 @@ export const UserDashboard = () => {
         </div>
     );
 };
+
+export default UserDashboard;

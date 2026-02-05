@@ -20,10 +20,10 @@ const Login = () => {
             });
                 
                 
-            alert('1');
+            // alert('1');
             console.log(response.data);
             if(response.data.success){
-                alert('2');
+                // alert('2');
                localStorage.setItem('token', response.data.token);
                 localStorage.setItem('role', response.data.role);
                 localStorage.setItem('user', JSON.stringify(response.data.user));
@@ -46,13 +46,26 @@ const Login = () => {
             <form onSubmit={handleLogin}>
                 <div>
                     <label>Email / Username:</label>
-                    <input type="text" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', marginBottom: '10px' }} />
+                    <input 
+                    type="text" 
+                    value={email} 
+                    onChange={(e) => setEmail(e.target.value)} 
+                    required 
+                    style={{ width: '100%', marginBottom: '10px' }} />
                 </div>
                 <div>
                     <label>Password:</label>
-                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ width: '100%', marginBottom: '10px' }} />
+                    <input 
+                    type="password" 
+                    value={password} 
+                    onChange={(e) => setPassword(e.target.value)} 
+                    required 
+                    style={{ width: '100%', marginBottom: '10px' }} />
                 </div>
-                <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#007bff', color: 'white', border: 'none' }}>Login</button>
+                <button 
+                type="submit" 
+                style={{ width: '100%', padding: '10px', backgroundColor: '#007bff', color: 'white', border: 'none' }}
+                >Login</button>
             </form>
         </div>
     )

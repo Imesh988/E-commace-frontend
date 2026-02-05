@@ -87,20 +87,20 @@ const GRNSave = ({ onGrnAdded, editingGrn, setEditingGrn }) => {
     }
 
     useEffect(() => {
-    if (editingGrn) {
-        const sanitizedData = {};
-        Object.keys(editingGrn).forEach(key => {
-            let value = editingGrn[key] === null ? "" : editingGrn[key];
+        if (editingGrn) {
+            const sanitizedData = {};
+            Object.keys(editingGrn).forEach(key => {
+                let value = editingGrn[key] === null ? "" : editingGrn[key];
 
-            if (key === 'date' && value) {
-                value = value.split('T')[0]; 
-            }
+                if (key === 'date' && value) {
+                    value = value.split('T')[0];
+                }
 
-            sanitizedData[key] = value;
-        });
-        setFormData(sanitizedData);
-    }
-}, [editingGrn]);
+                sanitizedData[key] = value;
+            });
+            setFormData(sanitizedData);
+        }
+    }, [editingGrn]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -111,50 +111,50 @@ const GRNSave = ({ onGrnAdded, editingGrn, setEditingGrn }) => {
         }
     };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
-    if (!validation()) return;
-    setLoading(true);
+        if (!validation()) return;
+        setLoading(true);
 
-    try {
-        if (editingGrn) { 
-            await grnApi.updateGrn(formData, editingGrn.id);
-            alert('GRN updated successfully!');
-        } else {
-            await grnApi.createGrn(formData);
-            alert('GRN registered successfully!');
+        try {
+            if (editingGrn) {
+                await grnApi.updateGrn(formData, editingGrn.id);
+                alert('GRN updated successfully!');
+            } else {
+                await grnApi.createGrn(formData);
+                alert('GRN registered successfully!');
+            }
+
+            handleReset();
+            onGrnAdded();
+
+        } catch (error) {
+            console.error("Error details:", error);
+            const errorMsg = error.response?.data?.sqlMessage || 'Internal server error !!';
+            alert(errorMsg);
+        } finally {
+            setLoading(false);
         }
+    };
 
-        handleReset();
-        onGrnAdded();
-
-    } catch (error) {
-        console.error("Error details:", error);
-        const errorMsg = error.response?.data?.sqlMessage || 'Internal server error !!';
-        alert(errorMsg);
-    } finally {
-        setLoading(false);
-    }
-};
-
-        const handleReset = () => {
+    const handleReset = () => {
         setFormData({
 
             supplier_id: '',
-        product_id: '',
-        date: '',
-        qty: '',
-        cost_price: '',
-        sell_price: '',
-        total: ''
+            product_id: '',
+            date: '',
+            qty: '',
+            cost_price: '',
+            sell_price: '',
+            total: ''
         })
         setEditingGrn(null)
         setErrors({})
     }
 
     return (
-         <div className="relative z-10 w-full max-w-5xl bg-white backdrop-blur-2xl shadow-2xl rounded-[40px] p-12 border border-white mx-auto">
+        <div className="relative z-10 w-full max-w-5xl bg-white backdrop-blur-2xl shadow-2xl rounded-[40px] p-12 border border-white mx-auto">
             <div className="flex items-center gap-4 mb-12">
                 <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200">
                     <GrNodes className="text-white" />
@@ -166,10 +166,10 @@ const GRNSave = ({ onGrnAdded, editingGrn, setEditingGrn }) => {
 
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-x-12 gap-y-8 mb-12">
-                   
 
-                 
-                     <ComboBox
+
+
+                    <ComboBox
                         label="Assign Supplier "
                         name="supplier_id"
                         value={formData.supplier_id}
@@ -178,7 +178,7 @@ const GRNSave = ({ onGrnAdded, editingGrn, setEditingGrn }) => {
                         placeholder="Select Supplier"
                         error={errors.supplier_id}
                     />
-                     <ComboBox
+                    <ComboBox
                         label="Assign product "
                         name="product_id"
                         value={formData.product_id}
@@ -198,7 +198,7 @@ const GRNSave = ({ onGrnAdded, editingGrn, setEditingGrn }) => {
                         error={errors.date}
                     />
 
-                      <TextField
+                    <TextField
                         label="Qentity "
                         name="qty"
                         value={formData.qty}
@@ -207,7 +207,7 @@ const GRNSave = ({ onGrnAdded, editingGrn, setEditingGrn }) => {
                         error={errors.qty}
                     />
 
-                      <TextField
+                    <TextField
                         label="Cost Price "
                         name="cost_price"
                         value={formData.cost_price}
@@ -216,7 +216,7 @@ const GRNSave = ({ onGrnAdded, editingGrn, setEditingGrn }) => {
                         error={errors.cost_price}
                     />
 
-                     <TextField
+                    <TextField
                         label="Sell Price"
                         name="sell_price"
                         value={formData.sell_price}
@@ -225,7 +225,7 @@ const GRNSave = ({ onGrnAdded, editingGrn, setEditingGrn }) => {
                         error={errors.sell_price}
                     />
 
-                          <TextField
+                    <TextField
                         label="Total"
                         name="total"
                         value={formData.total}
@@ -233,7 +233,7 @@ const GRNSave = ({ onGrnAdded, editingGrn, setEditingGrn }) => {
                         placeholder="Enter Total"
                         error={errors.total}
                     />
-                    
+
 
                 </div>
 

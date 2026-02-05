@@ -1,7 +1,7 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate , Outlet} from 'react-router-dom';
 
-const PeoductRouter = ({children , allowedRoles}) => {
+const ProtectedRoute = ({children , allowedRoles}) => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
 
@@ -9,11 +9,11 @@ const PeoductRouter = ({children , allowedRoles}) => {
         return <Navigate to='/login'/>
     }
 
-    if(allowedRoles && !allowedRoles.includes(role)){
-        return <Navigate to='/login'/>
+    if(!allowedRoles.includes(role)){
+        return <Navigate to='/login' replace/>
     }
 
-    return children;
+    return children ? children : <Outlet />;
 }
 
-export default PeoductRouter; 
+export default ProtectedRoute; 

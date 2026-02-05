@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import DataTabale from "../components/DataTable";
 import { CiEdit, CiSearch, CiTrash } from "react-icons/ci";
-import Navbar from "../layout/Navbar";
 import { supplierApi } from "../services/api";
 import SupplierSave from "../pages/SupplierSave";
 import { SlUser } from "react-icons/sl";
+import SuperAdminNavbar from "../layout/SuperadminNav";
 
 
 const SupplierForm = () => {
@@ -13,6 +13,8 @@ const SupplierForm = () => {
 
     const [editingSupplier, setEditingSupplier] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
+            const [profile, setProfile] = useState(null);
+    
 
 
     const fetchSupplier = async () => {
@@ -31,6 +33,12 @@ const SupplierForm = () => {
             setLoading(false);
         }
     };
+
+      const handleLogout = () => {
+    localStorage.clear();
+    window.location.href = '/login';
+  };
+
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
@@ -129,7 +137,7 @@ const SupplierForm = () => {
     return (
 
                    <>
-       <Navbar />
+      <SuperAdminNavbar onLogout={handleLogout} profile={profile} />
         <div className="relative min-h-screen bg-white overflow-x-hidden p-6 mt-5">
           
             <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-100 rounded-full blur-[120px] opacity-60 pointer-events-none"></div>
