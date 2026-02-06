@@ -3,6 +3,9 @@ import { superAdminApi } from "../services/api";
 import TextField from "../components/TextField";
 import Button from "../components/Button";
 import { ImUserTie } from "react-icons/im";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../firebaseConfig";
+
 
 const SuperAdminRegister = ({onSuperAdminAdded, editingSuperAdmin, setEditingSuperAdmin, superAdmins = []}) => {
     const [formData , setFormData] = useState({
@@ -72,17 +75,25 @@ const SuperAdminRegister = ({onSuperAdminAdded, editingSuperAdmin, setEditingSup
                 await superAdminApi.updateSuperAdmin(formData, editingSuperAdmin.super_admin_id);
                 alert('Super Admin updated successfully!');
             } else {
-                await superAdminApi.createSuperAdmin(formData);
-                alert('Super Admin registered successfully!');
+
+                 const superadminCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+
+                if (superadminCredential.user) {
+                    await superAdminApi.createSuperAdmin(formData);
+                    alert('Super Admin registered successfully!');
+                }
             }
     
+              if (typeof onSuperAdminAdded === 'function') {
+                onSuperAdminAdded();
+            }
+
             handleReset();
-            onSuperAdminAdded();
     
         } catch (error) {
-            console.error("Error details:", error);
-            
-            alert('Internal server error !!');
+           alert(error.code === 'auth/email-already-in-use'
+                ? 'This email is already registered in Firebase'
+                : error.response?.data?.msg || error.message);
             
         } finally {
             setLoading(false);
@@ -98,7 +109,11 @@ const SuperAdminRegister = ({onSuperAdminAdded, editingSuperAdmin, setEditingSup
             email: '',
         });
 
-        setEditingSuperAdmin(null);
+          if (typeof setEditingSuperAdmin === 'function') {
+                setEditingSuperAdmin(null);
+            }
+
+        setErrors({});
     }
 
      return (

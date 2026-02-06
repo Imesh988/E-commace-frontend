@@ -19,6 +19,7 @@ const UserForm = () => {
             if (window.confirm("Are you sure you want to delete this user?")) {
                 await userApi.deleteUser(id)
                     .then(() => {
+                        alert("User deleted successfully");
                         fetchUsers();
                     })
                     .catch(err => console.log(err));

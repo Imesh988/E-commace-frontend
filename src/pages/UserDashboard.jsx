@@ -1,5 +1,7 @@
 import React,{useEffect} from 'react';
 import axiosInstance from '../api/axiosConfig';
+import Navbar from '../layout/Navbar';
+
 
  const UserDashboard = () => {
     const handleLogout = () => {
@@ -15,6 +17,7 @@ import axiosInstance from '../api/axiosConfig';
 
     return (
         <div style={{ padding: '20px' }}>
+            <Navbar />
             <h1>User Dashboard</h1>
             <p>Welcome, You are logged in as a <b>Regular User</b>.</p>
             <button onClick={handleLogout} style={{ padding: '10px', backgroundColor: 'red', color: 'white', border: 'none' }}>Logout</button>

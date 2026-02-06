@@ -1,11 +1,19 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { BiLogOut, BiUserPlus } from "react-icons/bi";
-import { FaUser } from "react-icons/fa";
+import { BiLogOut, BiUserPlus, BiLogIn } from "react-icons/bi";
+import { FaUser, FaUserPlus } from "react-icons/fa";
 import { HiUserGroup } from "react-icons/hi";
 
 export const Navbar = () => {
     const navigate = useNavigate();
+    
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+
+    const handleLogout = () => {
+        localStorage.clear();
+        navigate('/login');
+    };
 
     const navBtnStyle = `
         group flex items-center gap-2 px-5 py-2.5 rounded-2xl 
@@ -46,38 +54,53 @@ export const Navbar = () => {
 
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2 bg-[#fefce8]/40 p-2 rounded-[24px] border border-[#fef9c3]/50">
+                            
+                            {token ? (
+                                <div className="flex items-center gap-1 md:gap-3">
+                                    <button onClick={() => navigate('/users')} className={navBtnStyle}>
+                                        <div className={iconBoxStyle}>
+                                            <FaUser className="text-lg text-[#4a634d] group-hover:text-[#eab308]" />
+                                        </div>
+                                        <span className="hidden sm:inline">User</span>
+                                    </button>
 
-                            <div className="flex items-center gap-1 md:gap-3">
-                                <button onClick={() => navigate('/users')} className={navBtnStyle}>
-                                    <div className={iconBoxStyle}>
-                                        <FaUser className="text-lg text-[#4a634d] group-hover:text-[#eab308]" />
-                                    </div>
-                                    <span className="hidden sm:inline">User</span>
-                                </button>
+                                    <button onClick={() => navigate('/roles')} className={navBtnStyle}>
+                                        <div className={iconBoxStyle}>
+                                            <HiUserGroup className="text-lg text-[#4a634d] group-hover:text-[#eab308]" />
+                                        </div>
+                                        <span className="hidden sm:inline">Role</span>
+                                    </button>
 
-                                <button onClick={() => navigate('/roles')} className={navBtnStyle}>
-                                    <div className={iconBoxStyle}>
-                                        <HiUserGroup className="text-lg text-[#4a634d] group-hover:text-[#eab308]" />
-                                    </div>
-                                    <span className="hidden sm:inline">Role</span>
-                                </button>
+                                    
 
-                                <button onClick={() => navigate('/super-admin')} className={navBtnStyle}>
-                                    <div className={iconBoxStyle}>
-                                        <BiUserPlus className="text-lg text-[#4a634d] group-hover:text-[#eab308]" />
-                                    </div>
-                                    <span className="hidden sm:inline">Super Admin</span>
-                                </button>
-                            </div>
+                                    <div className="h-10 w-[1px] bg-[#d1dbcd] mx-2 hidden md:block"></div>
 
-                            <div className="h-10 w-[1px] bg-[#d1dbcd] mx-2 hidden md:block"></div>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="group flex items-center gap-3 px-6 py-2.5 bg-[#f32f2f] text-[#fef2f2] rounded-2xl font-bold text-sm shadow-lg shadow-red-900/10 transition-all duration-500 hover:bg-[#dd0c0c] hover:text-white active:scale-95"
+                                    >
+                                        <span className="hidden md:inline">Logout</span>
+                                        <BiLogOut className="text-xl group-hover:translate-x-1 transition-transform" />
+                                    </button>
+                                </div>
+                            ) : (
+                               
+                                <div className="flex items-center gap-1 md:gap-3">
+                                    <button onClick={() => navigate('/login')} className={navBtnStyle}>
+                                        <div className={iconBoxStyle}>
+                                            <BiLogIn className="text-lg text-[#4a634d] group-hover:text-[#eab308]" />
+                                        </div>
+                                        <span>Login</span>
+                                    </button>
 
-                            <button
-                                className="group flex items-center gap-3 px-6 py-2.5 bg-[#f32f2f] text-[#fef2f2] rounded-2xl font-bold text-sm shadow-lg shadow-red-900/10 transition-all duration-500 hover:bg-[#dd0c0c] hover:text-white active:scale-95"
-                            >
-                                <span className="hidden md:inline">Logout</span>
-                                <BiLogOut className="text-xl group-hover:translate-x-1 transition-transform" />
-                            </button>
+                                    <button onClick={() => navigate('/')} className={`${navBtnStyle} bg-[#2d4030] text-white hover:bg-[#3d5641]`}>
+                                        <div className="p-1.5 bg-white/10 rounded-xl group-hover:bg-white/20 transition-all">
+                                            <FaUserPlus className="text-lg text-[#fef9c3]" />
+                                        </div>
+                                        <span>Register</span>
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -86,6 +109,6 @@ export const Navbar = () => {
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-full bg-[#eab308]/5 blur-[100px] -z-10"></div>
         </nav>
     );
-}
+};
 
 export default Navbar;
