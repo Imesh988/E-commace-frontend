@@ -52,6 +52,10 @@ export const SuperAdminNavbar = ({ onLogout, profile }) => {
                                 <div className={iconBoxStyle}><BiUserPlus className="text-[#4a634d]" /></div>
                                 <span>Super admin  </span>
                             </button>
+                             <button onClick={() => navigate('/user')} className={navBtnStyle}>
+                                <div className={iconBoxStyle}><FaUser className="text-[#4a634d]" /></div>
+                                <span>Users  </span>
+                            </button>
 
                              <button onClick={() => navigate('/super-admin/dashboard')} className={navBtnStyle}>
                                 <div className={iconBoxStyle}><BiUserPlus className="text-[#4a634d]" /></div>

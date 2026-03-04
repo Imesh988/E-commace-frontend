@@ -87,8 +87,68 @@ export const grnApi = {
 export const productApi = {
     createProduct: (product) => httpRequest.post("/product/create", product),
     getAllProduct: () => httpRequest.get("/product/all"),
-    getProductById: (productId) => httpRequest.get(`/product/id/${grnId}`),
-    getProductByText: (text) => httpRequest.get(`/product/text/${text}`),
-    updateProduct: (product, productId) => httpRequest.put(`/product/update/${productId}`, product),
-    deleteGrn: (productId) => httpRequest.delete(`/product/delete/${productId}`)
+    getProductById: (productId) => httpRequest.get(`/product/id/${productId}`),
+    getProductByText: (text) => httpRequest.get(`/product/search/${text}`),
+    updateProduct: (productId, product) => httpRequest.put(`/product/update/${productId}`, product), 
+    deleteProduct: (productId) => httpRequest.delete(`/product/delete/${productId}`)
+}
+
+export const categoryAPI = {
+    createCategory: (formData) => {
+        return httpRequest.post("/category/create", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+    },
+
+    updateCategory: (id, formData) => {
+        return httpRequest.put(`/category/update/${id}`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+    },
+    getAllCategory: () => httpRequest.get("/category/all"),
+    getCategoryById: (categoryID) => httpRequest.get(`/category/id/${categoryID}`),
+    getCategoryByText: (text) => httpRequest.get(`/category/${text}`),
+    deleteCategory: (categoryID) => httpRequest.put(`/category/delete/${categoryID}`),
+
+};
+
+
+
+
+export const productImageApi = {
+
+    createProductImage: (formData) => {
+        return httpRequest.post("/product-image/create", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+    },
+
+    updateProductImage: (productImageId, formData) => {
+        return httpRequest.put(`/product-image/update/${productImageId}`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+    },
+
+    getProductImageById: (productImageId) => httpRequest.get(`/product-image/id/${productImageId}`),
+    getProductImageByText: (text) => httpRequest.get(`/product-image/search/${text}`),
+    // updateProductImage: (productImageId, productImage) => httpRequest.put(`/product-image/update/${productImageId}`, productImage), 
+    deleteProductImage: (productImageId) => httpRequest.delete(`/product-image/delete/${productImageId}`),
+    getAllProductImage: () => httpRequest.get("/product-image/all"),
+}
+
+export const ProductDiscountApi = {
+     createProductDiscount: (productDiscount) => httpRequest.post("/product-discount/create", productDiscount),
+    getAllProductDiscount: () => httpRequest.get("/product-discount/all"),
+    getProductDiscountById: (productDiscountId) => httpRequest.get(`/product-discount/id/${productDiscountId}`),
+    getProductDiscountByText: (text) => httpRequest.get(`/product-discount/search/${text}`),
+    updateProductDiscount: (productDiscountId, productDiscount) => httpRequest.put(`/product-discount/update/${productDiscountId}`, productDiscount), 
+    deleteProductDiscount: (productDiscountId) => httpRequest.delete(`/product-discount/delete/${productDiscountId}`)
 }

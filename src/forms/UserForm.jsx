@@ -3,8 +3,11 @@ import DataTabale from "../components/DataTable";
 import { userApi } from "../services/api";
 import { CiEdit, CiSearch, CiTrash } from "react-icons/ci";
 import { FaUser } from "react-icons/fa";
-import UserRegister from "../pages/UserRegister";
-import Navbar from "../layout/Navbar";
+import SuperAdminNavbar from "../layout/SuperadminNav";
+// import UserRegister from "../pages/UserRegister";
+// import Navbar from "../layout/Navbar";
+
+
 
 
 const UserForm = () => {
@@ -14,20 +17,20 @@ const UserForm = () => {
     const [editingUser, setEditingUser] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
 
-    const userDelete = async (id) => {
-        try {
-            if (window.confirm("Are you sure you want to delete this user?")) {
-                await userApi.deleteUser(id)
-                    .then(() => {
-                        alert("User deleted successfully");
-                        fetchUsers();
-                    })
-                    .catch(err => console.log(err));
-            }
-        } catch (error) {
-            console.log(error);
-        }
-    }
+    // const userDelete = async (id) => {
+    //     try {
+    //         if (window.confirm("Are you sure you want to delete this user?")) {
+    //             await userApi.deleteUser(id)
+    //                 .then(() => {
+    //                     alert("User deleted successfully");
+    //                     fetchUsers();
+    //                 })
+    //                 .catch(err => console.log(err));
+    //         }
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
+    // }
 
     const fetchUsers = () => {
         setLoading(true);
@@ -35,11 +38,15 @@ const UserForm = () => {
             ? userApi.getAllUser()
             : userApi.getUserByText(searchTerm);
 
+            
+            
+
         request
             .then(res => {
                 const receivedData = res.data && res.data.data ? res.data.data : [];
                 setUsers(receivedData);
             })
+            
             .catch(err => {
                 console.log("Search error:", err);
                 setUsers([]);
@@ -97,27 +104,27 @@ const UserForm = () => {
             key: "email"
         },
 
-        {
-            header: "Actions",
-            render: (row) => (
-                <div className="flex justify-center gap-3">
-                    <button
-                        onClick={() => setEditingUser(row)}
-                        className="p-2 text-yellow-400 hover:bg-yellow-100 rounded-full transition"
-                        title="Edit"
-                    >
-                        <CiEdit size={24} className="text-yellow-500" />
-                    </button>
-                    <button
-                        onClick={() => userDelete(row.user_id)}
-                        className="p-2 text-red-600 hover:bg-red-100 rounded-full transition"
-                        title="Delete"
-                    >
-                        <CiTrash size={24} />
-                    </button>
-                </div>
-            )
-        }
+        // {
+        //     header: "Actions",
+        //     render: (row) => (
+        //         <div className="flex justify-center gap-3">
+        //             <button
+        //                 onClick={() => setEditingUser(row)}
+        //                 className="p-2 text-yellow-400 hover:bg-yellow-100 rounded-full transition"
+        //                 title="Edit"
+        //             >
+        //                 <CiEdit size={24} className="text-yellow-500" />
+        //             </button>
+        //             <button
+        //                 onClick={() => userDelete(row.user_id)}
+        //                 className="p-2 text-red-600 hover:bg-red-100 rounded-full transition"
+        //                 title="Delete"
+        //             >
+        //                 <CiTrash size={24} />
+        //             </button>
+        //         </div>
+        //     )
+        // }
 
 
     ];
@@ -130,26 +137,26 @@ const UserForm = () => {
     return (
         <>
 
-        <Navbar />
-            <div className="relative min-h-screen bg-white overflow-x-hidden p-6 mt-6">
+        <SuperAdminNavbar />
+            <div className="relative min-h-screen bg-white overflow-x-hidden  p-12 mt-12 ">
                 <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-100 rounded-full blur-[120px] opacity-60 pointer-events-none"></div>
                 <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-100 rounded-full blur-[120px] opacity-60 pointer-events-none"></div>
 
-                <div className="relative z-10 flex flex-col gap-12 items-center">
+                <div className="relative z-10 flex flex-col gap-12 items-center"> 
 
-                    <UserRegister
+                    {/* <UserRegister
                         onUserAdded={fetchUsers}
                         editingUser={editingUser}
                         setEditingUser={setEditingUser}
-                    />
+                    />  */}
 
                     <div className="w-full ">
 
-                        <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6 px-6">
+                        <div className="flex mb-10 flex-col md:flex-row justify-between items-center gap- px-6">
 
                             <h2 className="text-3xl font-bold text-green-600 flex items-center gap-3">
-                                <FaUser />
-                                <span>User Management</span>
+                                {/* <FaUser /> */}
+                                {/* <span>User Management</span> */}
                             </h2>
 
                             <div className="relative w-full md:w-96 group">
@@ -166,7 +173,7 @@ const UserForm = () => {
                             </div>
                         </div>
 
-                        <div className="backdrop-blur-xl p-8 overflow-hidden">
+                        <div className="backdrop-blur-xl p-8 overflow-hidden ">
                             <DataTabale columns={userColumns} data={users} />
                         </div>
                     </div>

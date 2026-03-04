@@ -21,6 +21,21 @@ import UserDashboard from "./pages/UserDashboard";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import Login from "./components/login";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Category from "./pages/Category";
+import CategoryForm from "./forms/CategoryForm";
+import Product from "./pages/Product";
+import ProductForm from "./forms/ProductForm";
+import ProductImage from "./pages/ProductImage";
+import ProductImageForm from "./forms/ProductImageForm";
+import ProductDiscount from "./pages/ProductDiscount";
+import ProductDiscountForm from "./forms/ProductDiscountForm";
+
+
+
+
+
+
+
 
 
 
@@ -35,8 +50,8 @@ function App() {
                 <Route path="/user" element={<UserForm />} />
                 {/* <Route path="/role" element={<RoleSave />} />
                 <Route path="/roleForm" element={<RoleForm />} /> */}
-                {/* <Route path="/superAdmin" element={<SuperAdminRegister />} />
-                <Route path="/superAdminForm" element={<SuperAdminForm />} /> */}
+                <Route path="/superAdmin" element={<SuperAdminRegister />} />
+                <Route path="/superAdminForm" element={<SuperAdminForm />} />
                 <Route path="/navbar" element={<Navbar />} />
                 {/* <Route path="/seller" element={<SellerSave />} /> */}
                 {/* <Route path="/sellerForm" element={<SellerForm />} /> */}
@@ -49,6 +64,14 @@ function App() {
                 <Route path="/grnPage" element={<GRNSave />} />
                 <Route path="/grnForm" element={<GrnForm />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/category" element={<Category />} />
+                <Route path="/product" element={<Product />} />
+                <Route path="/productForm" element={<ProductForm />} />
+                <Route path="/categoryForm" element={<CategoryForm />} />
+                <Route path="/productImage" element={<ProductImage />} />
+                <Route path="/productImageForm" element={<ProductImageForm />} />
+                <Route path="/productDiscount" element={<ProductDiscount />} />
+                <Route path="/productDiscountForm" element={<ProductDiscountForm />} />
                 <Route path="/seller" element={
                     <ProtectedRoute allowedRoles={['super_admin']}>
                         <SellerSave />
@@ -71,7 +94,7 @@ function App() {
                     </ProtectedRoute>
                 } />
 
-                 <Route path="/superAdmin" element={
+                <Route path="/superAdmin" element={
                     <ProtectedRoute allowedRoles={['super_admin']}>
                         <SuperAdminRegister />
                     </ProtectedRoute>
@@ -82,7 +105,7 @@ function App() {
                     </ProtectedRoute>
                 } />
 
-                 <Route path="/supplier" element={
+                <Route path="/supplier" element={
                     <ProtectedRoute allowedRoles={['super_admin']}>
                         <SupplierSave />
                     </ProtectedRoute>
