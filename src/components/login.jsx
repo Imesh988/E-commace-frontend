@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosConfig';
 import { Eye, EyeOff, Mail, Smartphone, Globe, ArrowLeft } from 'lucide-react';
 import Navbar from '../layout/Navbar';
+import { shippingAddressApi } from "../services/api";
+
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -13,43 +15,107 @@ const Login = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        console.log("1. Firebase User Credential:", userCredential.user);
 
-        try {
-
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
-            if(userCredential.user){
-                  const response = await axiosInstance.post('/auth/login', {
+        if(userCredential.user){
+            const response = await axiosInstance.post('/auth/login', {
                 email,
                 password,
                 isFirebaseLogin: true
             });
+            console.log("2. Backend Login Response Data:", response.data);
 
             if (response.data.success) {
-                localStorage.setItem('token', response.data.token);
+                const token = response.data.token;
+                const userData = response.data.user;
+                
+                localStorage.setItem('token', token);
                 localStorage.setItem('role', response.data.role);
-                localStorage.setItem('user', JSON.stringify(response.data.user));
+                localStorage.setItem('user', JSON.stringify(userData));
+
+                console.log("3. Token after localStorage:", localStorage.getItem('token'));
+                console.log("4. User data after localStorage:", userData);
+
+                // ✅ මෙතනදි user address එක shipping address එකට copy කරන්න
+                if (userData.user_id) {
+                    try {
+                        console.log("📦 Copying user address to shipping address...");
+                        
+                        // Prepare address data from user profile
+                        const recipientName = `${userData.first_name || ''} ${userData.last_name || ''}`.trim();
+                        const addressLine1 = userData.address_line1 || userData.addree_line1 || '';
+                        const city = userData.city || '';
+                        const district = userData.disctric || userData.district || '';
+                        const postalCode = userData.postal_code || '';
+                        const country = userData.country || 'Sri Lanka';
+                        const phoneNumber = userData.mobile_no_1 || '';
+                        
+                        // Check if address has required fields
+                        if (addressLine1 && city && district && postalCode && phoneNumber) {
+                            // Check existing shipping addresses
+                            const existingAddresses = await shippingAddressApi.getShippingAddressesByUserId(userData.user_id);
+                            
+                            if (existingAddresses.data && existingAddresses.data.length > 0) {
+                                // Update existing shipping address
+                                const existingAddress = existingAddresses.data[0];
+                                await shippingAddressApi.updateShippingAddress(existingAddress.shipping_id, {
+                                    recipient_name: recipientName,
+                                    address_line_1: addressLine1,
+                                    address_line_2: userData.address_line2 || '',
+                                    city: city,
+                                    district: district,
+                                    postal_code: postalCode,
+                                    country: country,
+                                    phone_number: phoneNumber,
+                                    is_default: true
+                                });
+                                console.log("✅ Shipping address updated");
+                            } else {
+                                // Create new shipping address
+                                await shippingAddressApi.createShippingAddress({
+                                    user_id: userData.user_id,
+                                    recipient_name: recipientName,
+                                    address_line_1: addressLine1,
+                                    address_line_2: userData.address_line2 || '',
+                                    city: city,
+                                    district: district,
+                                    postal_code: postalCode,
+                                    country: country,
+                                    phone_number: phoneNumber,
+                                    is_default: true
+                                });
+                                console.log("✅ Shipping address created");
+                            }
+                        } else {
+                            console.log("⚠️ User address incomplete, skipping copy");
+                        }
+                        
+                    } catch (addressError) {
+                        console.log("⚠️ Address copy error:", addressError.message);
+                        // Address copy fail වුණත් login දිගටම කරන්න
+                    }
+                }
 
                 if (response.data.role === 'super_admin') {
                     navigate('/super-admin/dashboard');
                 } else {
-                    navigate('/user/dashboard');
+                    navigate('/checkout');
                 }
             }
         }
-        } catch (error) {
-            setError(error.response?.data?.message || 'Login failed. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-
-        
-    };
+    } catch (error) {
+        setError(error.response?.data?.message || 'Login failed. Please try again.');
+    } finally {
+        setLoading(false);
+    }
+};
 
     const handleForgotPassword = async () => {
         if (!email) {
@@ -150,7 +216,7 @@ const Login = () => {
                       
 
                         <p 
-                            onClick={() => navigate('/')}
+                            onClick={() => navigate('/userRegister')}
                         className="mt-10 text-center text-xs font-bold text-gray-400">
                             Don't have an account? <span className="cursor-pointer text-green-600 hover:underline">Sign Up</span>
                         </p>

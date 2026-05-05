@@ -1,6 +1,6 @@
 import { auth } from "../firebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { userApi } from "../services/api";
 import TextField from "../components/TextField";
 import Button from "../components/Button";
@@ -87,27 +87,30 @@ const UserRegister = ({ onUserAdded, editingUser, setEditingUser, users = [] }) 
             else if (formData.password.length < 6) newErrors.password = "Must be at least 6 characters";
         }
 
-           const validateMobileField = (number, fieldName) => {
-                const prefix = getPrefix(formData.country);
-                if (!formData.country) return;
+        const validateMobileField = (number, fieldName) => {
+            const prefix = getPrefix(formData.country);
+            if (!formData.country) return;
 
-                const pureNumber = String(number || "").replace(prefix, "").trim();
+            const pureNumber = String(number || "").replace(prefix, "").trim();
 
-                if (pureNumber.length === 0) {
-                    newErrors[fieldName] = "Mobile number is required";
-                } else if (formData.country === "Sri Lanka") {
-                    if (pureNumber.length !== 9) {
-                        newErrors[fieldName] = "SL mobile must have 9 digits after +94";
-                    }
-                } else if (formData.country === "Japan") {
-                    if (pureNumber.length < 10 || pureNumber.length > 11) {
-                        newErrors[fieldName] = "Japan mobile must have 10-11 digits after +81";
-                    }
+            if (pureNumber.length === 0) {
+                newErrors[fieldName] = "Mobile number is required";
+            } else if (formData.country === "Sri Lanka") {
+                if (pureNumber.length !== 9) {
+                    newErrors[fieldName] = `SL mobile must have 9 digits after ${prefix.trim()}`;
                 }
-            };
+            } else if (formData.country === "Japan") {
+                if (pureNumber.length < 10 || pureNumber.length > 11) {
+                    newErrors[fieldName] = `Japan mobile must have 10-11 digits after ${prefix.trim()}`;
+                }
+            }
+        };
 
-            validateMobileField(formData.mobile_no_1, "mobile_no_1");
+        validateMobileField(formData.mobile_no_1, "mobile_no_1");
+        if (checkEmpty(formData.mobile_no_2)) {
             validateMobileField(formData.mobile_no_2, "mobile_no_2");
+        }
+
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -127,38 +130,59 @@ const UserRegister = ({ onUserAdded, editingUser, setEditingUser, users = [] }) 
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!validation()) return;
+    // ... (UserRegister.js file එකේ)
 
-        setLoading(true);
-        try {
-            if (editingUser) {
-                await userApi.updateUser(formData, editingUser.user_id);
-                alert('User updated successfully!');
-            } else {
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validation()) return;
 
-                const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+    setLoading(true);
+    try {
+        const userData = {
+            first_name: formData.first_name,
+            last_name: formData.last_name,
+            email: formData.email,
+            password: formData.password, // Only sent for new registration
+        };
 
-                if (userCredential.user) {
-                    await userApi.createUser(formData);
-                    alert('Registration successful!');
-                }
+        const shippingAddressData = {
+            recipient_name: `${formData.first_name} ${formData.last_name}`,
+            country: formData.country,
+            district: formData.disctric,
+            city: formData.city,
+            address_line1: formData.addree_line1,
+            address_line2: formData.address_line2,
+            postal_code: formData.postal_code,
+            phone_number: formData.mobile_no_1, // Using mobile_no_1 as primary phone_number
+        };
 
+        console.log("📤 Sending shipping address:", shippingAddressData);
 
+        if (editingUser) {
+            // Updating existing user and their default shipping address
+            await userApi.updateUser({ ...userData, shippingAddress: shippingAddressData }, editingUser.user_id);
+            alert('User and shipping address updated successfully!');
+        } else {
+            alert('2');
+            // Registering new user
+            const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+            if (userCredential.user) {
+                // Pass Firebase user ID if needed for backend user creation
+                
+                await userApi.createUser({ ...userData, shippingAddress: shippingAddressData, firebase_uid: userCredential.user.uid });
+                alert('Registration successful!');
             }
-            if (typeof onUserAdded === 'function') {
-                onUserAdded();
-            }
-            handleReset();
-        } catch (error) {
-            alert(error.code === 'auth/email-already-in-use'
-                ? 'This email is already registered in Firebase'
-                : error.response?.data?.msg || error.message);
-        } finally {
-            setLoading(false);
         }
-    };
+        if (typeof onUserAdded === 'function') {
+            onUserAdded();
+        }
+        handleReset();
+    } catch (error) {
+        // ... error handling
+    } finally {
+        setLoading(false);
+    }
+};
 
     const handleReset = () => {
         setFormData({
@@ -177,19 +201,23 @@ const UserRegister = ({ onUserAdded, editingUser, setEditingUser, users = [] }) 
             status: 1
         });
 
-          if (typeof setEditingUser === 'function') {
-                setEditingUser(null);
-            }
-       
+        if (typeof setEditingUser === 'function') {
+            setEditingUser(null);
+        }
+
         setErrors({});
     };
 
     return (
-        <div className="min-h-screen bg-[#f8faf9] pb-20">
-            <Navbar />
+        <div className="relative min-h-screen bg-gradient-to-br from-emerald-50 to-yellow-50 font-sans overflow-hidden">
+            <div className="absolute top-0 left-0 w-80 h-80 bg-emerald-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>
+            <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000 z-0"></div>
+            <div className="absolute bottom-0 right-0 w-72 h-72 bg-emerald-100 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000 z-0"></div>
+            <div className="absolute bottom-1/4 right-1/2 w-64 h-64 bg-yellow-100 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>
 
-            <main className="mt-12 px-6">
-                <div className="relative z-10 w-full max-w-6xl bg-white/90 backdrop-blur-2xl shadow-[0_32px_64px_-15px_rgba(0,0,0,0.1)] rounded-[40px] p-8 md:p-14 border border-white mx-auto transition-all duration-500">
+
+            <main className="mt-12 px-6 relative z-10">
+                <div className="w-full max-w-6xl bg-white/90 backdrop-blur-2xl shadow-[0_32px_64px_-15px_rgba(0,0,0,0.1)] rounded-[40px] p-8 md:p-14 border border-white mx-auto transition-all duration-500">
 
                     <div className="flex items-center gap-5 mb-12">
                         <div className="w-14 h-14 bg-emerald-500 rounded-[22px] flex items-center justify-center shadow-lg shadow-emerald-200 transform transition-transform hover:rotate-6">
@@ -341,6 +369,32 @@ const UserRegister = ({ onUserAdded, editingUser, setEditingUser, users = [] }) 
                     </form>
                 </div>
             </main>
+
+            {/* <style jsx>{`
+                @keyframes blob {
+                    0% {
+                        transform: translate(0px, 0px) scale(1);
+                    }
+                    33% {
+                        transform: translate(30px, -50px) scale(1.1);
+                    }
+                    66% {
+                        transform: translate(-20px, 20px) scale(0.9);
+                    }
+                    100% {
+                        transform: translate(0px, 0px) scale(1);
+                    }
+                }
+                .animate-blob {
+                    animation: blob 7s infinite;
+                }
+                .animation-delay-2000 {
+                    animation-delay: 2s;
+                }
+                .animation-delay-4000 {
+                    animation-delay: 4s;
+                }
+            `}</style> */}
         </div>
     );
 };

@@ -29,6 +29,11 @@ import ProductImage from "./pages/ProductImage";
 import ProductImageForm from "./forms/ProductImageForm";
 import ProductDiscount from "./pages/ProductDiscount";
 import ProductDiscountForm from "./forms/ProductDiscountForm";
+import Cart from "./pages/Cart";
+import CheckoutPage from "./pages/CheckoutPage";
+import ShippingAddressPage from "./pages/ShippingAddressPage";
+import UserProfilePage from "./pages/UserProfilePage";
+
 
 
 
@@ -46,7 +51,7 @@ function App() {
         <Router>
             <Routes>
 
-                <Route path="/" element={<UserRegister />} />
+                <Route path="/userRegister" element={<UserRegister />} />
                 <Route path="/user" element={<UserForm />} />
                 {/* <Route path="/role" element={<RoleSave />} />
                 <Route path="/roleForm" element={<RoleForm />} /> */}
@@ -72,6 +77,16 @@ function App() {
                 <Route path="/productImageForm" element={<ProductImageForm />} />
                 <Route path="/productDiscount" element={<ProductDiscount />} />
                 <Route path="/productDiscountForm" element={<ProductDiscountForm />} />
+                <Route path="/cart" element={<Cart />} />
+                 <Route path="/shipping-addresses" element={<ShippingAddressPage />} />
+                 <Route path="/profile" element={<UserProfilePage />} />
+                 <Route path="/" element={
+                    
+                        <UserDashboard />
+                   
+                } />
+
+                  <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/seller" element={
                     <ProtectedRoute allowedRoles={['super_admin']}>
                         <SellerSave />
@@ -122,11 +137,7 @@ function App() {
                     </ProtectedRoute>
                 } />
 
-                <Route path="/user/dashboard" element={
-                    <ProtectedRoute allowedRoles={['user']}>
-                        <UserDashboard />
-                    </ProtectedRoute>
-                } />
+               
             </Routes>
         </Router>
     );

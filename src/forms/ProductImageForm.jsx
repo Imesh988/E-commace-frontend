@@ -22,6 +22,8 @@ const ProductImageForm = () => {
         setLoading(true);
         try {
             const response = await productImageApi.getAllProductImage();
+            console.log(response);
+            
             const receivedData = response.data && response.data.data ? response.data.data : [];
             setProductImages(receivedData);
             console.log(receivedData);

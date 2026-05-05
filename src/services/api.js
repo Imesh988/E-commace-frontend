@@ -7,6 +7,70 @@ const httpRequest = axios.create({
     },
 });
 
+// Request interceptor
+httpRequest.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('token');
+        console.log('🔍 [httpRequest] Token from localStorage:', token ? 'Present' : 'Not found');
+        
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+            console.log('✅ [httpRequest] Token attached to request');
+        } else {
+            console.log('❌ [httpRequest] No token found!');
+        }
+        
+        console.log('🔍 [httpRequest] Request URL:', config.url);
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// ✅ Response interceptor - මේක වැදගත්ම කොටස
+// ✅ නිවැරදි response interceptor - data වෙනස් නොකරන්න
+httpRequest.interceptors.response.use(
+    (response) => {
+        console.log('✅ [httpRequest] Response received:', response.status);
+        
+        // 💡 Just log the structure, don't modify it
+        if (response.data && typeof response.data === 'object' && 'data' in response.data && Array.isArray(response.data.data)) {
+            console.log('ℹ️ Wrapped data detected in response.data.data, length:', response.data.data.length);
+            // ⚠️ DON'T modify response.data - let the component handle it
+        }
+        
+        // Return the original response unchanged
+        return response;
+    },
+    (error) => {
+        console.log('❌ [httpRequest] Response error:', error.response?.status, error.response?.data);
+        
+        // Handle 404 error for shipping addresses
+        if (error.response?.status === 404 && 
+            error.response?.data?.msg === "No Shipping Addresses Found for this user!") {
+            console.log('ℹ️ No shipping addresses found - returning empty array');
+            return Promise.resolve({
+                data: [],
+                status: 200,
+                statusText: 'OK',
+                headers: {},
+                config: error.config,
+                request: error.request
+            });
+        }
+        
+        if (error.response?.status === 401) {
+            console.log('🔍 [httpRequest] Unauthorized - clearing token');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+        }
+        
+        return Promise.reject(error);
+    }
+);
+
+
 export const userApi = {
     createUser: (user) => httpRequest.post("/user/create", user),
     getAllUser: () => httpRequest.get("/user/all"),
@@ -14,6 +78,9 @@ export const userApi = {
     getUserByText: (text) => httpRequest.get(`/user/search/${text}`),
     updateUser: (user, userId) => httpRequest.put(`/user/update/${userId}`, user),
     deleteUser: (userId) => httpRequest.delete(`/user/delete/${userId}`),
+      getUserProfile: () => httpRequest.get("/user/profile"),
+       updateUserProfile: (userId, userData) => httpRequest.put(`/user/profile/${userId}`, userData),
+    
 }
 
 
@@ -86,12 +153,13 @@ export const grnApi = {
 
 export const productApi = {
     createProduct: (product) => httpRequest.post("/product/create", product),
-    getAllProduct: () => httpRequest.get("/product/all"),
+    getAllProduct: (params = {}) => httpRequest.get("/product/all", { params }),
     getProductById: (productId) => httpRequest.get(`/product/id/${productId}`),
     getProductByText: (text) => httpRequest.get(`/product/search/${text}`),
     updateProduct: (productId, product) => httpRequest.put(`/product/update/${productId}`, product), 
-    deleteProduct: (productId) => httpRequest.delete(`/product/delete/${productId}`)
-}
+    deleteProduct: (productId) => httpRequest.delete(`/product/delete/${productId}`),
+  getAllProductText: (params = {}) => httpRequest.get("/product/allText", { params })}
+
 
 export const categoryAPI = {
     createCategory: (formData) => {
@@ -113,11 +181,14 @@ export const categoryAPI = {
     getCategoryById: (categoryID) => httpRequest.get(`/category/id/${categoryID}`),
     getCategoryByText: (text) => httpRequest.get(`/category/${text}`),
     deleteCategory: (categoryID) => httpRequest.put(`/category/delete/${categoryID}`),
-
+ getProducts: (params) => httpRequest.get("/product-image/all", { params: params }),
 };
 
 
 
+
+// Assuming httpRequest is defined elsewhere, e.g., in axiosConfig or similar
+// import httpRequest from './httpRequest'; // You might need to adjust this path
 
 export const productImageApi = {
 
@@ -139,10 +210,10 @@ export const productImageApi = {
 
     getProductImageById: (productImageId) => httpRequest.get(`/product-image/id/${productImageId}`),
     getProductImageByText: (text) => httpRequest.get(`/product-image/search/${text}`),
-    // updateProductImage: (productImageId, productImage) => httpRequest.put(`/product-image/update/${productImageId}`, productImage), 
+    getProductImageByCategory: (categoryName) => httpRequest.get(`/product-image/category/${categoryName}`),
     deleteProductImage: (productImageId) => httpRequest.delete(`/product-image/delete/${productImageId}`),
-    getAllProductImage: () => httpRequest.get("/product-image/all"),
-}
+ getAllProductImage: () => httpRequest.get("/product-image/all"),
+};
 
 export const ProductDiscountApi = {
      createProductDiscount: (productDiscount) => httpRequest.post("/product-discount/create", productDiscount),
@@ -151,4 +222,58 @@ export const ProductDiscountApi = {
     getProductDiscountByText: (text) => httpRequest.get(`/product-discount/search/${text}`),
     updateProductDiscount: (productDiscountId, productDiscount) => httpRequest.put(`/product-discount/update/${productDiscountId}`, productDiscount), 
     deleteProductDiscount: (productDiscountId) => httpRequest.delete(`/product-discount/delete/${productDiscountId}`)
-}
+};
+
+export const CartApi = {
+    getCartItems: () => httpRequest.get("/cart/all"),
+    getCartCount: () => httpRequest.get("/cart/count"),
+   addToCart: (productId, qty, totalAmount) => { 
+        const data = { 
+            productId: productId, 
+            qty: qty, 
+            totalAmount: totalAmount  // Now totalAmount is defined
+        };
+        console.log('📦 CartApi.addToCart:', data);
+        return httpRequest.post('/cart/add', data);
+    },
+
+    updateCartItem: (cartId, cartItem) => httpRequest.put(`/cart/update/${cartId}`, cartItem),
+    removeCartItem: (cartId) => httpRequest.delete(`/cart/remove/${cartId}`),
+    clearCart: () => httpRequest.delete("/cart/clear"),
+};
+
+export const shippingAddressApi = {
+    createShippingAddress: (address) => httpRequest.post("/shipping-addresses", address),
+    getAllShippingAddresses: () => httpRequest.get("/shipping-addresses/all"),
+    getShippingAddressesByUserId: (userId) => httpRequest.get(`/shipping-addresses/user/${userId}`), // 👈 මේක
+    getShippingAddressById: (shippingId) => httpRequest.get(`/shipping-addresses/${shippingId}`),
+    updateShippingAddress: (shippingId, addressData) => httpRequest.put(`/shipping-addresses/${shippingId}`, addressData),
+    deleteShippingAddress: (shippingId) => httpRequest.delete(`/shipping-addresses/${shippingId}`),
+    setDefaultShippingAddress: (userId, shippingId) => httpRequest.put(`/shipping-addresses/set-default/${userId}/${shippingId}`),
+};
+
+export const orderApi = {
+    // Backend routes: /api/orders/...
+    placeOrder: (orderDetails) => httpRequest.post("/orders", orderDetails),
+    getAllOrders: () => httpRequest.get("/orders"),
+    getOrdersByUserId: (userId) => httpRequest.get(`/orders/user/${userId}`),
+    getOrderDetails: (orderId) => httpRequest.get(`/orders/${orderId}`), // order, order_items, payments ලබාගැනීමට
+    updateOrderStatus: (orderId, newStatus) => httpRequest.put(`/orders/status/${orderId}`, { new_status: newStatus }),
+};
+
+export const orderItemApi = {
+    // Backend routes: orderItemModel එකට සෘජු routes සාමාන්‍යයෙන් තනන්නේ නැත.
+    // OrderDetails endpoint එක හරහා Order Items ලබාගත හැක.
+    // කෙසේ වෙතත්, ඔබට අවශ්‍ය නම්, පහත පරිදි endpoints නිර්මාණය කළ හැක.
+    // (මේවාට අදාළ routes ඔබගේ backend එකේ සකස් කර නොමැත)
+    getOrderItemByOrderId: (orderId) => httpRequest.get(`/order-items/order/${orderId}`), // මෙය orderApi.getOrderDetails එකේ කොටසක් ලෙස ලැබේ.
+    // deleteOrderItem: (orderItemId) => httpRequest.delete(`/order-items/${orderItemId}`), // අවශ්‍ය නම්
+};
+
+export const paymentApi = {
+    // Backend routes: /api/payments/...
+    processPayment: (paymentDetails) => httpRequest.post("/payments", paymentDetails),
+    getPaymentByOrderId: (orderId) => httpRequest.get(`/payments/order/${orderId}`),
+    getPaymentById: (paymentId) => httpRequest.get(`/payments/${paymentId}`),
+    updatePaymentStatus: (paymentId, newStatus) => httpRequest.put(`/payments/status/${paymentId}`, { new_status: newStatus }),
+};
