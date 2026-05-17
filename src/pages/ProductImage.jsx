@@ -1,245 +1,223 @@
-import React, { useEffect, useState } from "react";
-import { TbCategoryPlus } from "react-icons/tb";
-import Button from "../components/Button";
-import { productApi, productImageApi } from "../services/api";
-import ComboBox from "../components/ComboBox";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { orderApi } from '../services/api';
+import Navbar from '../layout/Navbar';
+import { toast } from 'react-toastify';
 
-const ProductImage = ({ onProductImageAdded, editingProductImage, cancelEdit }) => {
-    const IMAGE_BASE_URL = "http://localhost:5000/public/product/images/";
+const BASE_URL = "http://localhost:5000";
 
-    const [productImageData, setProductImageData] = useState({
-        status: 1,
-        image: null,
-        is_primary: false,
-        product_id: "",
-    });
+const LoadingSpinner = () => (
+    <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600"></div>
+    </div>
+);
 
-    const [loading, setLoading] = useState(false);
-    const [productOptions, setProductOptions] = useState([]);
-    const isEditing = !!editingProductImage?.image_id;
-    const [previewImage, setPreviewImage] = useState(null);
-
-    useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                const resProduct = await productApi.getAllProduct();
-                const dataProduct = resProduct.data && resProduct.data.data ? resProduct.data.data : [];
-                const optionsProduct = dataProduct.map((item) => ({
-                    value: item.product_id,
-                    label: item.product_name,
-                }));
-                setProductOptions(optionsProduct);
-            } catch (error) {
-                console.log("Error fetching Products:", error);
-                alert("Failed to load products.");
-            }
-        };
-
-        fetchProducts();
-    }, []);
-
-    useEffect(() => {
-        if (isEditing && editingProductImage) {
-            setProductImageData({
-                status: editingProductImage.status || 1,
-                image: null,
-                is_primary: !!editingProductImage.is_primary,
-                product_id: editingProductImage.product_id || "",
-            });
-
-            if (editingProductImage.image) {
-                let imagePath = editingProductImage.image;
-                if (!imagePath.startsWith('/')) {
-                    imagePath = `/${imagePath}`;
-                }
-                setPreviewImage(`${IMAGE_BASE_URL}${imagePath.replace('public/product/images/', '')}`);
-            } else {
-                setPreviewImage(null);
-            }
-        } else {
-            resetForm();
-        }
-    }, [isEditing, editingProductImage]);
-
-    const handleChange = (e) => {
-        const { name, value, files, type, checked } = e.target;
-
-        if (type === 'file') {
-            const file = files[0];
-            setProductImageData((prev) => ({
-                ...prev,
-                [name]: file,
-            }));
-
-            if (file) {
-                setPreviewImage(URL.createObjectURL(file));
-            } else {
-                if (isEditing && editingProductImage?.image) {
-                    let imagePath = editingProductImage.image;
-                    if (!imagePath.startsWith('/')) {
-                        imagePath = `/${imagePath}`;
-                    }
-                    setPreviewImage(`${IMAGE_BASE_URL}${imagePath.replace('public/product/images/', '')}`);
-                } else {
-                    setPreviewImage(null);
-                }
-            }
-        } else {
-            setProductImageData((prev) => ({
-                ...prev,
-                [name]: type === 'checkbox' ? checked : value,
-            }));
-        }
+const OrderStatusBadge = ({ status }) => {
+    const statusConfig = {
+        1: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800', icon: '⏳' },
+        2: { label: 'Processing', color: 'bg-blue-100 text-blue-800', icon: '🔄' },
+        3: { label: 'Shipped', color: 'bg-purple-100 text-purple-800', icon: '📦' },
+        4: { label: 'Delivered', color: 'bg-green-100 text-green-800', icon: '✅' },
+        5: { label: 'Cancelled', color: 'bg-red-100 text-red-800', icon: '❌' }
     };
+    const config = statusConfig[status] || statusConfig[1];
+    return (
+        <span className={`px-4 py-2 rounded-xl text-sm font-semibold ${config.color}`}>
+            <span className="mr-1">{config.icon}</span> {config.label}
+        </span>
+    );
+};
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
+const PaymentStatusBadge = ({ status }) => {
+    const statusConfig = {
+        1: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
+        2: { label: 'Paid', color: 'bg-green-100 text-green-800' },
+        3: { label: 'Failed', color: 'bg-red-100 text-red-800' }
+    };
+    const config = statusConfig[status] || statusConfig[1];
+    return (
+        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${config.color}`}>
+            {config.label}
+        </span>
+    );
+};
 
-        const formDataToSend = new FormData();
+const OrderDetailsPage = () => {
+    const { orderId } = useParams();
+    const navigate = useNavigate();
+    const [order, setOrder] = useState(null);
+    const [items, setItems] = useState([]);
+    const [payments, setPayments] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-        formDataToSend.append("product_id", productImageData.product_id);
-        formDataToSend.append("status", productImageData.status);
-        formDataToSend.append("is_primary", productImageData.is_primary ? '1' : '0');
-
-        if (productImageData.image) {
-            formDataToSend.append("image", productImageData.image);
-        } else if (isEditing && editingProductImage?.image && !productImageData.image) {
-            
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            toast.warn('Please login to view order details');
+            navigate('/login');
+            return;
         }
+        fetchOrderDetails();
+    }, [orderId]);
 
+    const fetchOrderDetails = async () => {
+        setLoading(true);
         try {
-            if (!productImageData.product_id) {
-                alert("Please select a product.");
-                setLoading(false);
-                return;
+            const response = await orderApi.getOrderDetails(orderId);
+            console.log('Order details:', response.data);
+            
+            if (response.data) {
+                setOrder(response.data.order);
+                setItems(response.data.items || []);
+                setPayments(response.data.payments || []);
             }
-            if (!isEditing && !productImageData.image) {
-                alert("Product Image is required for new entries!");
-                setLoading(false);
-                return;
-            }
-
-            if (isEditing) {
-                await productImageApi.updateProductImage(editingProductImage.image_id, formDataToSend);
-                alert("Product Image updated successfully!");
-            } else {
-                await productImageApi.createProductImage(formDataToSend);
-                alert("Product Image added successfully!");
-            }
-
-            if (typeof onProductImageAdded === 'function') {
-                onProductImageAdded();
-            }
-            resetForm();
-            if (cancelEdit) cancelEdit();
-
-        } catch (err) {
-            console.error("Error submitting product image:", err);
-            alert("An error occurred. Please try again.");
+        } catch (error) {
+            console.error('Error fetching order details:', error);
+            toast.error('Failed to load order details');
+            navigate('/orders');
         } finally {
             setLoading(false);
         }
     };
 
-    const resetForm = () => {
-        setProductImageData({
-            status: 1,
-            image: null,
-            is_primary: false,
-            product_id: "",
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
         });
-        setPreviewImage(null);
     };
 
-    const handleCancel = () => {
-        resetForm();
-        if (cancelEdit) cancelEdit();
+    // Demo Image Generator - No more undefined errors
+    const getProductImageUrl = (item) => {
+        // First check if product_image exists
+        if (item.product_image && item.product_image !== 'undefined' && item.product_image !== 'null') {
+            const imagePath = item.product_image;
+            const imageUrl = `${BASE_URL}${imagePath.startsWith('/') ? imagePath : `/${imagePath}`}`;
+            return imageUrl;
+        }
+        
+        // If no image, generate a demo image based on product name
+        const colors = ['4F46E5', '10B981', 'F59E0B', 'EF4444', '8B5CF6', 'EC4899', '06B6D4'];
+        const colorIndex = (item.product_id || item.product_name?.length || 0) % colors.length;
+        const text = item.product_name?.charAt(0)?.toUpperCase() || 'P';
+        return `https://via.placeholder.com/80/${colors[colorIndex]}/ffffff?text=${text}`;
     };
+
+    if (loading) return <LoadingSpinner />;
+    if (!order) return null;
 
     return (
-        <div className="relative z-10 w-full max-w-5xl bg-white/80 backdrop-blur-2xl shadow-2xl rounded-[40px] p-12 border border-white mx-auto">
-            <div className="flex items-center gap-4 mb-12">
-                <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200 text-white">
-                    <TbCategoryPlus size={24} />
-                </div>
-                <h2 className="text-2xl font-bold text-emerald-700">
-                    {isEditing ? "Update Product Image" : "Add New Product Image"}
-                </h2>
-            </div>
+        <>
+            <Navbar />
+            <div className="bg-gray-50 min-h-screen py-10">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <button
+                        onClick={() => navigate('/orders')}
+                        className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Back to Orders
+                    </button>
 
-            <form onSubmit={handleSubmit}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 mb-12">
+                    <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+                        <div className="flex flex-wrap justify-between items-start gap-4">
+                            <div>
+                                <h1 className="text-2xl font-bold text-gray-900 mb-2">Order Details</h1>
+                                <p className="font-mono text-sm text-gray-500">Order ID: {order.order_id}</p>
+                            </div>
+                            <OrderStatusBadge status={order.status} />
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-gray-100 flex flex-wrap gap-6 text-sm">
+                            <div>
+                                <p className="text-gray-500">Placed on</p>
+                                <p className="font-medium text-gray-700">{formatDate(order.created_at)}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-500">Items</p>
+                                <p className="font-medium text-gray-700">{order.qty} items</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-500">Payment Status</p>
+                                <PaymentStatusBadge status={payments[0]?.status || 1} />
+                            </div>
+                        </div>
+                    </div>
 
-                    <div className="flex flex-col gap-2">
-                        <label className="text-xs font-semibold text-gray-400"> Product Image {isEditing ? "(Select new to change)" : "(Required for new entry)"}</label>
-                        <div className="flex items-center gap-4 p-3 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
-                            {previewImage && (
-                                <img
-                                    src={previewImage}
-                                    className="w-14 h-14 rounded-xl object-cover border-2 border-white shadow-sm"
-                                    alt="Product Preview"
-                                />
-                            )}
-                            <input
-                                type="file"
-                                name="image"
-                                onChange={handleChange}
-                                required={!isEditing}
-                                className="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer w-full"
-                            />
-                            {!previewImage && !isEditing && (
-                                <span className="text-gray-500 text-sm">No file selected</span>
-                            )}
-                            {isEditing && !previewImage && editingProductImage?.image && (
-                                <span className="text-gray-500 text-sm">Existing file: {editingProductImage.image.split('/').pop()}</span>
+                    <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+                        <h2 className="text-lg font-bold text-gray-900 mb-4">Order Items</h2>
+                        <div className="space-y-4">
+                            {items.length === 0 ? (
+                                <p className="text-gray-500 text-center py-4">No items found</p>
+                            ) : (
+                                items.map((item, index) => (
+                                    <div key={item.order_item_id || item.id || index} className="flex gap-4 pb-4 border-b border-gray-100 last:border-0">
+                                        <div className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
+                                            <img
+                                                src={getProductImageUrl(item)}
+                                                alt={item.product_name || 'Product'}
+                                                className="w-full h-full object-cover rounded-lg"
+                                                onError={(e) => {
+                                                    console.log('Image error for:', item.product_name);
+                                                    e.target.src = `https://via.placeholder.com/80/4F46E5/ffffff?text=${(item.product_name?.charAt(0) || 'P')}`;
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="flex-grow">
+                                            <h3 className="font-semibold text-gray-800">{item.product_name || 'Product'}</h3>
+                                            <p className="text-sm text-gray-500">Quantity: {item.qty}</p>
+                                            <p className="text-sm text-gray-500">Price: LKR {parseFloat(item.price_at_order).toLocaleString()}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-bold text-emerald-600">LKR {parseFloat(item.item_total).toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                ))
                             )}
                         </div>
                     </div>
 
-                    <ComboBox
-                        label="Assign Product"
-                        name="product_id"
-                        value={productImageData.product_id}
-                        onChange={handleChange}
-                        options={productOptions}
-                        placeholder="Select Product"
-                    />
-
-                    <div className="flex items-center gap-2 mt-2">
-                        <input
-                            id="is_primary"
-                            type="checkbox"
-                            name="is_primary"
-                            checked={productImageData.is_primary}
-                            onChange={handleChange}
-                            className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
-                        />
-                        <label htmlFor="is_primary" className="text-sm font-semibold text-gray-700">Set as Primary Image</label>
+                    <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+                        <h2 className="text-lg font-bold text-gray-900 mb-4">Shipping Address</h2>
+                        <div className="bg-gray-50 rounded-lg p-4">
+                            <p className="font-semibold text-gray-800">{order.recipient_name}</p>
+                            <p className="text-gray-600 mt-1">{order.address_line_1}</p>
+                            {order.address_line_2 && <p className="text-gray-600">{order.address_line_2}</p>}
+                            <p className="text-gray-600">{order.city}, {order.district}</p>
+                            <p className="text-gray-600">{order.postal_code}, {order.country}</p>
+                            <p className="text-gray-600 mt-2">Phone: {order.phone_number}</p>
+                        </div>
                     </div>
 
+                    <div className="bg-white rounded-xl shadow-sm p-6">
+                        <h2 className="text-lg font-bold text-gray-900 mb-4">Payment Summary</h2>
+                        <div className="space-y-3">
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Subtotal</span>
+                                <span className="text-gray-800">LKR {(parseFloat(order.total_amount) + parseFloat(order.discount || 0)).toLocaleString()}</span>
+                            </div>
+                            {order.discount > 0 && (
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Discount</span>
+                                    <span className="text-red-500">- LKR {parseFloat(order.discount).toLocaleString()}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between pt-3 border-t border-gray-200">
+                                <span className="text-lg font-bold text-gray-900">Total</span>
+                                <span className="text-2xl font-bold text-emerald-600">LKR {parseFloat(order.total_amount).toLocaleString()}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
-                <div className="flex justify-end gap-4 mt-8">
-                    <Button
-                        title="Cancel"
-                        variant="outline"
-                        icon="✕"
-                        onClick={handleCancel}
-                        type="button"
-                    />
-
-                    <Button
-                        title={loading ? "Processing..." : (isEditing ? "Update Image" : "Save Image")}
-                        variant={isEditing ? "warning" : "primary"}
-                        icon={isEditing ? "✏️" : "💾"}
-                        type="submit"
-                        disabled={loading}
-                    />
-                </div>
-            </form>
-        </div>
+            </div>
+        </>
     );
 };
 
-export default ProductImage;
+export default OrderDetailsPage;

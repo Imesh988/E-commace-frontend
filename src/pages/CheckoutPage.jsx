@@ -1,7 +1,8 @@
+// src/pages/CheckoutPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../layout/Navbar';
-import { shippingAddressApi, CartApi, orderApi, userApi } from '../services/api';
+import { shippingAddressApi, CartApi, orderApi, userApi, paymentApi } from '../services/api';
 import { IoShieldCheckmark, IoCardOutline, IoLocationOutline } from 'react-icons/io5';
 import { MdLocalShipping } from 'react-icons/md';
 import { toast, ToastContainer } from 'react-toastify';
@@ -18,7 +19,28 @@ const LoadingSpinner = () => (
     </div>
 );
 
-// ✅ EditAddressModal component එක CheckoutPage එකෙන් පිටතට ගන්න
+const PaymentLoadingModal = ({ isOpen, message }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+                <div className="flex flex-col items-center text-center">
+                    <div className="relative mb-6">
+                        <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center">
+                            <svg className="w-10 h-10 text-emerald-600 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600 mb-4"></div>
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">Processing Payment</h3>
+                    <p className="text-gray-500 text-sm">{message || "Redirecting to secure payment gateway..."}</p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const EditAddressModal = ({ address, isOpen, onClose, onSave }) => {
     const [formData, setFormData] = useState({
         recipient_name: '',
@@ -80,7 +102,7 @@ const EditAddressModal = ({ address, isOpen, onClose, onSave }) => {
                         <input type="text" name="address_line_1" value={formData.address_line_1} onChange={handleChange} required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 2 (Optional)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 2</label>
                         <input type="text" name="address_line_2" value={formData.address_line_2} onChange={handleChange} className="w-full border border-gray-300 rounded-lg px-3 py-2" />
                     </div>
                     <div>
@@ -125,10 +147,257 @@ const CheckoutPage = () => {
     const [processingOrder, setProcessingOrder] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingAddress, setEditingAddress] = useState(null);
+    const [paymentLoading, setPaymentLoading] = useState(false);
+    const [createdOrderId, setCreatedOrderId] = useState(null);
 
-    // ✅ Address update handler function
+
+    // ✅ THIS MUST BE THE VERY FIRST useEffect IN CheckoutPage
+    useEffect(() => {
+        console.log("🔴🔴🔴 CHECKING FOR STRIPE RETURN - FULL URL:", window.location.href);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+        const orderId = urlParams.get('order_id');
+
+        console.log("session_id:", sessionId);
+        console.log("order_id:", orderId);
+
+        // If we have both session_id and order_id in URL
+        if (sessionId && orderId) {
+            console.log("✅✅✅ STRIPE RETURN DETECTED! Clearing cart...");
+
+            const forceClearCart = async () => {
+                try {
+                    const token = localStorage.getItem('token');
+
+                    // Clear cart from API
+                    const clearResponse = await fetch('http://localhost:5000/api/v1/cart/clear', {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    console.log("Cart clear response:", clearResponse.status);
+
+                    // Clear all local storage
+                    localStorage.removeItem('guestCart');
+                    localStorage.removeItem('cartItems');
+                    sessionStorage.removeItem('pendingCart');
+                    sessionStorage.removeItem('pendingOrderId');
+                    sessionStorage.removeItem('checkoutCartData');
+
+                    // Update navbar
+                    window.dispatchEvent(new Event('cart-updated'));
+                    window.dispatchEvent(new CustomEvent('cart-updated'));
+
+                    toast.success('Payment successful! Order confirmed.');
+
+                    // Force reload cart state in dashboard
+                    // Clear the cartItems state in CheckoutPage
+                    setCartItems([]);
+
+                    // Redirect to orders page after 1 second
+                    setTimeout(() => {
+                        window.location.href = `/orders/${orderId}`;
+                    }, 1000);
+
+                } catch (error) {
+                    console.error("Error clearing cart:", error);
+                    // Still redirect even if clear fails
+                    window.location.href = `/orders/${orderId}`;
+                }
+            };
+
+            forceClearCart();
+        }
+    }, []); // Empty dependency array - runs only once
+
+
+    useEffect(() => {
+        console.log("🔴 CheckoutPage mounted - checking URL");
+        console.log("Full URL:", window.location.href);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+        const orderId = urlParams.get('order_id');
+
+        console.log("session_id:", sessionId);
+        console.log("order_id:", orderId);
+
+        // If we have both session_id and order_id in URL, clear cart
+        if (sessionId && orderId) {
+            console.log("✅ Stripe return detected! Clearing cart...");
+
+            const clearCartAndRedirect = async () => {
+                try {
+                    const token = localStorage.getItem('token');
+
+                    // Clear cart from API
+                    await fetch('http://localhost:5000/api/v1/cart/clear', {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    console.log("Cart cleared from API");
+
+                    // Clear local storage
+                    localStorage.removeItem('guestCart');
+                    localStorage.removeItem('cartItems');
+                    sessionStorage.removeItem('pendingCart');
+                    sessionStorage.removeItem('pendingOrderId');
+                    sessionStorage.removeItem('checkoutCartData');
+
+                    // Update navbar
+                    window.dispatchEvent(new Event('cart-updated'));
+
+                    toast.success('Payment successful!');
+
+                    // Redirect to orders page
+                    window.location.href = `/orders/${orderId}`;
+
+                } catch (error) {
+                    console.error("Error clearing cart:", error);
+                    // Still redirect even if clear fails
+                    window.location.href = `/orders/${orderId}`;
+                }
+            };
+
+            clearCartAndRedirect();
+        }
+    }, []);
+
+    // SINGLE useEffect for Stripe callback - REMOVE THE DUPLICATE
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+        const success = urlParams.get('success');
+        const canceled = urlParams.get('canceled');
+
+        console.log("🔍 URL CHECK:", { sessionId, success, canceled });
+
+        if (success === 'true' && sessionId) {
+            console.log("✅ Payment success! Processing...");
+            handleSuccessfulPayment(sessionId);
+        }
+
+        if (canceled === 'true') {
+            console.log("❌ Payment cancelled");
+            toast.info('Payment was cancelled. You can try again.');
+            window.history.replaceState({}, document.title, window.location.pathname);
+            setPaymentLoading(false);
+        }
+    }, []);
+
+
+    // Add this at the top of CheckoutPage component, before any other useEffect
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+        const orderId = urlParams.get('order_id');
+        const success = urlParams.get('success');
+
+        console.log("🔴 CHECKPAGE: Checking for Stripe return...");
+        console.log("session_id:", sessionId);
+        console.log("order_id:", orderId);
+        console.log("success:", success);
+
+        // If coming from Stripe success (check for session_id and order_id)
+        if (sessionId && orderId) {
+            console.log("✅ Stripe return detected in CheckoutPage!");
+
+            const clearCartAndRedirect = async () => {
+                const token = localStorage.getItem('token');
+
+                // Clear cart
+                await fetch('http://localhost:5000/api/v1/cart/clear', {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                // Clear local storage
+                localStorage.removeItem('guestCart');
+                localStorage.removeItem('cartItems');
+                sessionStorage.removeItem('pendingCart');
+                sessionStorage.removeItem('pendingOrderId');
+
+                // Update navbar
+                window.dispatchEvent(new Event('cart-updated'));
+
+                toast.success('Payment successful!');
+
+                // Redirect to orders page
+                window.location.href = `/orders/${orderId}`;
+            };
+
+            clearCartAndRedirect();
+        }
+    }, []);
+
+    const handleSuccessfulPayment = async (sessionId) => {
+        console.log("🔄 Starting payment verification...");
+        setPaymentLoading(true);
+
+        try {
+            const response = await orderApi.verifyPayment(sessionId);
+            console.log("📦 Verification response:", response.data);
+
+            if (response.data.success) {
+                console.log("✅ Payment verified! Clearing cart...");
+
+                // Clear cart from API
+                await CartApi.clearCart();
+                console.log("🗑️ API Cart cleared");
+
+                // Clear localStorage
+                localStorage.removeItem('guestCart');
+                localStorage.removeItem('cartItems');
+                console.log("🗑️ localStorage cleared");
+
+                // Clear sessionStorage
+                sessionStorage.removeItem('checkoutCartData');
+                sessionStorage.removeItem('pendingOrderId');
+                sessionStorage.removeItem('pendingCart');
+                console.log("🗑️ sessionStorage cleared");
+
+                // Clear state
+                setCartItems([]);
+
+                // Dispatch event to update navbar
+                window.dispatchEvent(new CustomEvent('cart-updated'));
+                window.dispatchEvent(new Event('cart-updated'));
+
+                toast.success('Payment successful! Order confirmed.');
+
+                // Redirect to orders page
+                const orderId = response.data.order_id;
+                console.log("🚀 Redirecting to orders page, orderId:", orderId);
+
+                setTimeout(() => {
+                    if (orderId) {
+                        window.location.href = `/orders/${orderId}`;
+                    } else {
+                        window.location.href = '/orders';
+                    }
+                }, 1000);
+
+            } else {
+                console.error("Payment verification failed");
+                toast.error('Payment verification failed');
+                setPaymentLoading(false);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        } catch (error) {
+            console.error('Payment verification error:', error);
+            toast.error('Failed to verify payment. Please check your orders.');
+            setPaymentLoading(false);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    };
+
     const handleAddressUpdate = () => {
-        console.log('Address updated event received, refreshing...');
         fetchCheckoutData();
     };
 
@@ -140,7 +409,6 @@ const CheckoutPage = () => {
             return;
         }
 
-        // ✅ Add event listener for address updates
         window.addEventListener('address-updated', handleAddressUpdate);
 
         const storedUser = localStorage.getItem('user');
@@ -154,7 +422,6 @@ const CheckoutPage = () => {
         }
         fetchCheckoutData();
 
-        // ✅ Cleanup event listener
         return () => {
             window.removeEventListener('address-updated', handleAddressUpdate);
         };
@@ -171,8 +438,72 @@ const CheckoutPage = () => {
             return;
         }
 
+        const savedCartData = sessionStorage.getItem('checkoutCartData');
+        if (savedCartData) {
+            try {
+                const parsedCart = JSON.parse(savedCartData);
+                if (parsedCart && parsedCart.length > 0) {
+                    setCartItems(parsedCart);
+
+                    const userProfileRes = await userApi.getUserProfile();
+                    const fetchedUser = userProfileRes.data;
+                    setUser(fetchedUser);
+                    localStorage.setItem('user', JSON.stringify(fetchedUser));
+
+                    let addresses = [];
+                    try {
+                        const addressRes = await shippingAddressApi.getShippingAddressesByUserId(fetchedUser.user_id);
+                        if (addressRes.data && Array.isArray(addressRes.data)) {
+                            addresses = addressRes.data;
+                        } else if (addressRes.data && addressRes.data.data && Array.isArray(addressRes.data.data)) {
+                            addresses = addressRes.data.data;
+                        }
+                    } catch (addressError) {
+                        console.log("No addresses found");
+                    }
+
+                    if (addresses.length === 0) {
+                        const defaultAddress = {
+                            user_id: fetchedUser.user_id,
+                            recipient_name: `${fetchedUser.first_name} ${fetchedUser.last_name}`,
+                            address_line_1: fetchedUser.address_line1 || fetchedUser.addree_line1 || "",
+                            address_line_2: fetchedUser.address_line2 || "",
+                            city: fetchedUser.city || "",
+                            district: fetchedUser.district || fetchedUser.disctric || "",
+                            postal_code: fetchedUser.postal_code || "",
+                            country: fetchedUser.country || "Sri Lanka",
+                            phone_number: fetchedUser.mobile_no_1 || "",
+                            is_default: true
+                        };
+
+                        if (defaultAddress.address_line_1) {
+                            const createRes = await shippingAddressApi.createShippingAddress(defaultAddress);
+                            if (createRes.data && createRes.data.shipping_id) {
+                                addresses = [createRes.data];
+                                toast.success("Default shipping address created!");
+                            }
+                        } else {
+                            toast.info("Please add a shipping address to continue");
+                            navigate('/shipping-addresses');
+                            setLoading(false);
+                            return;
+                        }
+                    }
+
+                    setShippingAddresses(addresses);
+                    if (addresses.length > 0) {
+                        setSelectedAddress(addresses[0]);
+                    }
+
+                    setLoading(false);
+                    return;
+                }
+            } catch (e) {
+                console.error("Error parsing saved cart data:", e);
+            }
+        }
+
         try {
-            // User Profile Fetching
             const userProfileRes = await userApi.getUserProfile();
             const fetchedUser = userProfileRes.data;
             setUser(fetchedUser);
@@ -182,14 +513,9 @@ const CheckoutPage = () => {
                 throw new Error("User data is not available or incomplete after fetching profile.");
             }
 
-            // Shipping Addresses Fetching
-            console.log("Fetching shipping addresses for user:", fetchedUser.user_id);
-
             let addresses = [];
             try {
                 const addressRes = await shippingAddressApi.getShippingAddressesByUserId(fetchedUser.user_id);
-                console.log("Address response:", addressRes);
-
                 if (addressRes.data && Array.isArray(addressRes.data)) {
                     addresses = addressRes.data;
                 } else if (addressRes.data && addressRes.data.data && Array.isArray(addressRes.data.data)) {
@@ -201,9 +527,7 @@ const CheckoutPage = () => {
                 console.log("No addresses found, will create one from profile");
             }
 
-            // If no addresses, create one from user profile
             if (addresses.length === 0) {
-                console.log("Creating default address from profile...");
                 const defaultAddress = {
                     user_id: fetchedUser.user_id,
                     recipient_name: `${fetchedUser.first_name} ${fetchedUser.last_name}`,
@@ -236,10 +560,7 @@ const CheckoutPage = () => {
                 setSelectedAddress(addresses[0]);
             }
 
-            // Cart Items Fetching
             const cartRes = await CartApi.getCartItems();
-            console.log("Cart API Response:", cartRes);
-
             let cartData = [];
             if (cartRes && cartRes.data) {
                 if (Array.isArray(cartRes.data)) {
@@ -250,13 +571,9 @@ const CheckoutPage = () => {
                     cartData = cartRes.data.items;
                 } else if (cartRes.data.cart_items && Array.isArray(cartRes.data.cart_items)) {
                     cartData = cartRes.data.cart_items;
-                } else {
-                    console.warn("Unexpected cart data structure:", cartRes.data);
-                    cartData = [];
                 }
             }
 
-            console.log("Setting cart items (count):", cartData.length);
             setCartItems(cartData);
 
         } catch (err) {
@@ -268,14 +585,12 @@ const CheckoutPage = () => {
         }
     };
 
-    // ✅ Fixed handleUpdateAddress function
     const handleUpdateAddress = async (shippingId, formData) => {
         try {
             const response = await shippingAddressApi.updateShippingAddress(shippingId, formData);
             if (response.data.success || response.data.shipping_id) {
                 await fetchCheckoutData();
                 toast.success('Address updated successfully!');
-                // Dispatch event to notify other components
                 window.dispatchEvent(new Event('address-updated'));
                 return response.data;
             }
@@ -286,7 +601,6 @@ const CheckoutPage = () => {
         }
     };
 
-    // ✅ localStorage check for address update
     useEffect(() => {
         const checkForAddressUpdate = () => {
             const addressUpdated = localStorage.getItem('addressUpdated');
@@ -296,12 +610,11 @@ const CheckoutPage = () => {
                 toast.success('Shipping address updated!');
             }
         };
-        
+
         const interval = setInterval(checkForAddressUpdate, 1000);
         return () => clearInterval(interval);
     }, []);
 
-    // Calculate functions
     const calculateSubtotal = () => {
         if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
             return 0;
@@ -326,22 +639,60 @@ const CheckoutPage = () => {
     const finalAmount = subtotal - discountAmount;
     const totalQuantity = calculateTotalQuantity();
 
+    const handleStripePayment = async (orderId) => {
+        setPaymentLoading(true);
+        sessionStorage.setItem('pendingOrderId', orderId);
+
+        try {
+            const response = await paymentApi.createStripeCheckout(orderId);
+            const checkoutUrl = response.data?.url || response.data?.checkoutUrl || response.url;
+
+            if (checkoutUrl) {
+                window.location.href = checkoutUrl;
+            } else {
+                throw new Error('No checkout URL received');
+            }
+        } catch (error) {
+            console.error('Stripe error:', error);
+            toast.error(error.response?.data?.msg || 'Failed to initiate payment. Please try again.');
+            setPaymentLoading(false);
+            sessionStorage.removeItem('pendingOrderId');
+        }
+    };
+
+
+    // Add this as a global check when component mounts
+    useEffect(() => {
+        // Check if we're returning from Stripe
+        if (window.location.search.includes('session_id') && window.location.search.includes('order_id')) {
+            const sessionId = new URLSearchParams(window.location.search).get('session_id');
+            const orderId = new URLSearchParams(window.location.search).get('order_id');
+
+            console.log("Detected Stripe return! Session:", sessionId, "Order:", orderId);
+
+            // Force clear everything
+            const forceClear = async () => {
+                const token = localStorage.getItem('token');
+                await fetch('http://localhost:5000/api/v1/cart/clear', {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.href = `/orders/${orderId}`;
+            };
+
+            forceClear();
+        }
+    }, []);
+
     const handlePlaceOrder = async () => {
         if (!selectedAddress) {
             toast.error('Please select a shipping address.');
             return;
         }
-        if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
-            toast.error('Your cart is empty. Cannot place an order.');
-            return;
-        }
-        if (!paymentMethod) {
-            toast.error('Please select a payment method.');
-            return;
-        }
-        if (!user || !user.user_id) {
-            toast.error('User information is missing. Please re-login.');
-            navigate('/login');
+        if (!cartItems || cartItems.length === 0) {
+            toast.error('Your cart is empty.');
             return;
         }
 
@@ -354,24 +705,80 @@ const CheckoutPage = () => {
                     product_id: item.product_id,
                     qty: item.qty
                 })),
-                payment_method: paymentMethod,
+                payment_method: paymentMethod === 'card' ? 'stripe' : 'cod',
                 discount_amount: discountAmount,
             };
 
             const orderRes = await orderApi.placeOrder(orderDetails);
-            if (orderRes.data.order_id) {
-                toast.success('Order placed successfully!');
-                navigate(`/orders/${orderRes.data.order_id}`);
+            const newOrderId = orderRes.data.order_id;
+
+            if (paymentMethod === 'card') {
+                sessionStorage.setItem('pendingCart', JSON.stringify(cartItems));
+                await handleStripePayment(newOrderId);
+            } else {
                 await CartApi.clearCart();
+                setCartItems([]);
                 window.dispatchEvent(new Event('cart-updated'));
+                toast.success('Order placed successfully!');
+                navigate(`/orders/${newOrderId}`);
             }
         } catch (err) {
-            console.error('Error placing order:', err.response?.data || err.message);
-            toast.error(err.response?.data?.msg || 'Failed to place order.');
-        } finally {
+            console.error('Error:', err);
+            toast.error('Failed to place order.');
             setProcessingOrder(false);
         }
     };
+
+
+    // Add this useEffect at the VERY TOP of CheckoutPage component, before any other code
+    useEffect(() => {
+        console.log("🔴 STRIPE RETURN CHECK - FULL URL:", window.location.href);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+        const success = urlParams.get('success');
+        const canceled = urlParams.get('canceled');
+
+        console.log("📋 PARAMS:", { sessionId, success, canceled });
+
+        // If coming from Stripe success
+        if (success === 'true' && sessionId) {
+            console.log("✅ STRIPE SUCCESS! Processing...");
+
+            // Immediately clear cart and redirect
+            const processPayment = async () => {
+                try {
+                    // Clear cart
+                    await CartApi.clearCart();
+                    console.log("Cart cleared");
+
+                    // Clear storage
+                    localStorage.removeItem('guestCart');
+                    localStorage.removeItem('cartItems');
+                    sessionStorage.clear();
+
+                    // Update navbar
+                    window.dispatchEvent(new Event('cart-updated'));
+
+                    toast.success("Payment successful!");
+
+                    // Redirect to orders page
+                    window.location.href = '/orders';
+
+                } catch (error) {
+                    console.error("Error processing payment:", error);
+                    window.location.href = '/orders';
+                }
+            };
+
+            processPayment();
+        }
+
+        if (canceled === 'true') {
+            toast.info("Payment cancelled");
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }, []); // Empty dependency array - runs only once on mount
 
     const handleApplyCoupon = () => {
         if (couponCode.toUpperCase() === 'FIRSTBUY') {
@@ -400,7 +807,7 @@ const CheckoutPage = () => {
         return !cartItems || !Array.isArray(cartItems) || cartItems.length === 0;
     };
 
-    if (isCartEmpty()) {
+    if (isCartEmpty() && !sessionStorage.getItem('checkoutCartData')) {
         return (
             <>
                 <Navbar />
@@ -421,218 +828,229 @@ const CheckoutPage = () => {
     }
 
     return (
-        <>
-            <ToastContainer position="top-right" autoClose={3000} hideProgressBar newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="light" />
-            <Navbar />
-            <div className="bg-gray-50 min-h-screen py-8">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h1 className="text-3xl font-extrabold text-gray-900 mb-8">Checkout</h1>
+      <>
+    <ToastContainer position="top-right" autoClose={3000} hideProgressBar newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="light" />
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Left Column */}
-                        <div className="lg:col-span-2 space-y-6">
-                            {/* Shipping Address Section */}
-                            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                                        <IoLocationOutline size={22} className="text-emerald-500" /> Shipping Address
-                                    </h2>
-                                    <div className="flex gap-2">
-                                        
-                                        {selectedAddress && (
-                                            <button
-                                                onClick={() => {
-                                                    setEditingAddress(selectedAddress);
-                                                    setIsEditModalOpen(true);
-                                                }}
-                                                className="text-lg text-emerald-600 hover:underline"
-                                            >
-                                                <FaEdit />
-                                            </button>
-                                        )}
+    <PaymentLoadingModal isOpen={paymentLoading} message="Redirecting to secure payment gateway..." />
+
+    <div className="bg-[#f4fbf6] min-h-screen pb-20 relative overflow-hidden">
+        <div className="fixed inset-0 z-0 pointer-events-none">
+            <div className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-emerald-200/30 rounded-full blur-[120px]"></div>
+            <div className="absolute bottom-[5%] right-[-5%] w-[600px] h-[600px] bg-yellow-200/20 rounded-full blur-[130px]"></div>
+            <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-emerald-100/40 rounded-full blur-[100px]"></div>
+            <div className="absolute bottom-[-10%] left-[10%] w-[500px] h-[500px] bg-yellow-100/30 rounded-full blur-[110px]"></div>
+        </div>
+
+        <div className="relative z-10">
+            <Navbar />
+
+            <div className="max-w-[1550px] mx-auto px-4 sm:px-6 lg:px-10 pt-10">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div className="lg:col-span-8 space-y-6">
+                        <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-100 p-8">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-lg font-black text-gray-800 flex items-center gap-2">
+                                    <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white">
+                                        <IoLocationOutline size={20} />
                                     </div>
-                                </div>
-                                {selectedAddress ? (
-                                    <div className="text-gray-700 bg-gray-50 p-4 rounded-lg">
-                                        <p className="font-semibold">{selectedAddress.recipient_name}</p>
-                                        <p>{selectedAddress.address_line_1}, {selectedAddress.city}</p>
-                                        {selectedAddress.address_line_2 && <p>{selectedAddress.address_line_2}</p>}
-                                        <p>{selectedAddress.district}, {selectedAddress.postal_code}, {selectedAddress.country}</p>
-                                        <p>Phone: {selectedAddress.phone_number}</p>
-                                        {selectedAddress.is_default && (
-                                            <span className="inline-block mt-2 text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded">
-                                                Default Address
-                                            </span>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <p className="text-gray-500">No address selected. <button onClick={() => navigate('/shipping-addresses')} className="text-blue-600 hover:underline">Add one</button></p>
+                                    SHIPPING ADDRESS
+                                </h2>
+                                {selectedAddress && (
+                                    <button
+                                        onClick={() => { setEditingAddress(selectedAddress); setIsEditModalOpen(true); }}
+                                        className="text-xs font-black text-emerald-500 hover:underline tracking-widest"
+                                    >
+                                        CHANGE ADDRESS
+                                    </button>
                                 )}
                             </div>
 
-                            {/* Cart Items Section */}
-                            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                                <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2 mb-4">
-                                    <CiShoppingCart size={22} className="text-emerald-500" /> Order Items ({cartItems?.length || 0})
-                                </h2>
-                                <div className="space-y-4 max-h-96 overflow-y-auto">
-                                    {cartItems && Array.isArray(cartItems) && cartItems.map((item) => (
-                                        <div key={item.cart_id || item.id} className="flex items-center gap-4 border-b pb-4 last:border-b-0 last:pb-0">
-                                            <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border bg-gray-100">
-                                                {item.image ? (
-                                                    <img
-                                                        src={`${BASE_URL}${item.image.startsWith('/') ? item.image : `/${item.image}`}`}
-                                                        alt={item.product_name}
-                                                        className="w-full h-full object-cover"
-                                                        onError={(e) => { e.target.src = "https://via.placeholder.com/80?text=No+Image"; }}
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">No Img</div>
-                                                )}
-                                            </div>
-                                            <div className="flex-grow">
-                                                <h3 className="text-md font-medium text-gray-800 line-clamp-2">{item.product_name}</h3>
-                                                <p className="text-sm text-gray-500">Qty: {item.qty}</p>
-                                                <div className="flex items-baseline gap-2">
-                                                    <p className="text-lg font-bold text-emerald-600">LKR {parseFloat(item.final_price || item.price).toFixed(2)}</p>
-                                                    {item.discount_status === 1 && (
-                                                        <p className="text-sm text-gray-400 line-through">LKR {parseFloat(item.price).toFixed(2)}</p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <p className="text-lg font-bold text-gray-800">LKR {parseFloat(item.total_amount).toFixed(2)}</p>
-                                        </div>
-                                    ))}
+                            {selectedAddress ? (
+                                <div className="bg-gray-50/50 border border-gray-100 p-6 rounded-2xl relative">
+                                    {selectedAddress.is_default && (
+                                        <span className="absolute top-4 right-4 bg-emerald-500 text-[9px] font-black text-white px-2.5 py-1 rounded-md uppercase tracking-wider">
+                                            Default
+                                        </span>
+                                    )}
+                                    <p className="font-bold text-gray-900 text-lg mb-1">{selectedAddress.recipient_name}</p>
+                                    <p className="text-gray-500 font-medium leading-relaxed text-sm">
+                                        {selectedAddress.address_line_1}, {selectedAddress.city}<br />
+                                        {selectedAddress.address_line_2 && <>{selectedAddress.address_line_2}<br /></>}
+                                        {selectedAddress.district}, {selectedAddress.postal_code}
+                                    </p>
+                                    <div className="mt-4 pt-4 border-t border-gray-200 flex items-center gap-2 text-sm">
+                                        <span className="text-gray-400 font-bold uppercase text-[10px]">Contact:</span>
+                                        <span className="text-gray-800 font-bold">{selectedAddress.phone_number}</span>
+                                    </div>
                                 </div>
-                                <button onClick={() => navigate('/')} className="mt-4 text-sm text-blue-600 hover:underline flex items-center gap-1">
-                                    <ArrowLeft size={16} /> Continue Shopping
-                                </button>
-                            </div>
-
-                            {/* Payment Methods Section */}
-                            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-                                <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2 mb-4">
-                                    <IoCardOutline size={22} className="text-emerald-500" /> Payment Methods
-                                </h2>
-                                <div className="space-y-4">
-                                    <label className="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
-                                        <input
-                                            type="radio"
-                                            name="paymentMethod"
-                                            value="card"
-                                            checked={paymentMethod === 'card'}
-                                            onChange={(e) => setPaymentMethod(e.target.value)}
-                                            className="form-radio text-emerald-600 h-5 w-5"
-                                        />
-                                        <span className="ml-3 text-gray-700 font-medium">Credit/Debit Card</span>
-                                        <div className="ml-auto flex gap-2">
-                                            <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded">Mastercard</span>
-                                            <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded">Visa</span>
-                                        </div>
-                                    </label>
-                                    <label className="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
-                                        <input
-                                            type="radio"
-                                            name="paymentMethod"
-                                            value="cod"
-                                            checked={paymentMethod === 'cod'}
-                                            onChange={(e) => setPaymentMethod(e.target.value)}
-                                            className="form-radio text-emerald-600 h-5 w-5"
-                                        />
-                                        <span className="ml-3 text-gray-700 font-medium">Cash On Delivery</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="lg:col-span-1">
-                            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 sticky top-28">
-                                <h2 className="text-xl font-bold text-gray-800 mb-4">Order Summary</h2>
-
-                                <div className="flex items-center mb-4">
-                                    <input
-                                        type="text"
-                                        placeholder="Enter coupon code"
-                                        value={couponCode}
-                                        onChange={(e) => setCouponCode(e.target.value)}
-                                        className="flex-grow border border-gray-300 rounded-lg px-4 py-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                                    />
-                                    <button
-                                        onClick={handleApplyCoupon}
-                                        className="ml-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-                                    >
-                                        Apply
+                            ) : (
+                                <div className="text-center py-10 border-2 border-dashed border-gray-100 rounded-2xl">
+                                    <p className="text-gray-400 font-bold mb-4">No address selected</p>
+                                    <button onClick={() => navigate('/shipping-addresses')} className="bg-emerald-500 text-white px-6 py-2 rounded-xl font-bold hover:bg-emerald-600 transition-all shadow-md">
+                                        Add New Address
                                     </button>
                                 </div>
+                            )}
+                        </div>
 
-                                <div className="space-y-2 text-gray-700 text-lg mb-4">
-                                    <div className="flex justify-between">
-                                        <span>Item(s) total ({totalQuantity}):</span>
-                                        <span>LKR {subtotal.toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>Item(s) discount:</span>
-                                        <span className="text-red-500">- LKR {discountAmount.toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex justify-between font-bold text-gray-800">
-                                        <span>Subtotal:</span>
-                                        <span>LKR {(subtotal - discountAmount).toFixed(2)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="flex items-center gap-1">
-                                            <MdLocalShipping size={20} className="text-emerald-500" /> Shipping:
-                                        </span>
-                                        <span className="font-bold text-emerald-600">FREE</span>
-                                    </div>
+                        <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-100 p-8">
+                            <div className="flex items-center gap-2 mb-8">
+                                <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white">
+                                    <CiShoppingCart size={20} />
                                 </div>
+                                <h2 className="text-lg font-black text-gray-800 uppercase tracking-wider">ORDER SUMMARY ({cartItems?.length || 0})</h2>
+                            </div>
 
-                                <div className="border-t border-gray-200 pt-4 mt-4">
-                                    <div className="flex justify-between items-center text-2xl font-bold text-gray-900">
-                                        <span>Order total:</span>
-                                        <span>LKR {finalAmount.toFixed(2)}</span>
+                            <div className="space-y-6">
+                                {cartItems?.map((item) => (
+                                    <div key={item.cart_id || item.id} className="flex gap-6 items-start pb-6 border-b border-gray-50 last:border-0 last:pb-0">
+                                        <div className="w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden border border-gray-100 bg-white p-1">
+                                            <img
+                                                src={`${BASE_URL}${item.image}`}
+                                                alt={item.product_name}
+                                                className="w-full h-full object-cover rounded-lg"
+                                            />
+                                        </div>
+                                        <div className="flex-grow pt-1">
+                                            <h3 className="text-gray-900 font-bold text-lg leading-tight mb-1">{item.product_name}</h3>
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded font-bold">Qty: {item.qty}</span>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <p className="text-xl font-black text-emerald-600">LKR {parseFloat(item.final_price).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                                                {item.discount_status === 1 && (
+                                                    <p className="text-sm text-gray-300 line-through font-bold">LKR {parseFloat(item.price).toFixed(2)}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="text-right pt-1 hidden sm:block">
+                                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">Item Total</p>
+                                            <p className="text-lg font-black text-gray-800">LKR {parseFloat(item.total_amount).toLocaleString()}</p>
+                                        </div>
                                     </div>
-                                </div>
+                                ))}
+                            </div>
 
-                                <p className="text-sm text-gray-500 mt-6">
-                                    By submitting your order you agree to our <a href="#" className="text-blue-600 hover:underline">Terms of Use</a> and <a href="#" className="text-blue-600 hover:underline">Privacy Policy</a>.
-                                </p>
+                            <button onClick={() => navigate('/')} className="mt-8 flex items-center gap-2 text-xs font-black text-emerald-500 hover:text-emerald-700 transition-colors uppercase tracking-widest">
+                                <ArrowLeft size={16} /> Add more items
+                            </button>
+                        </div>
 
-                                <button
-                                    onClick={handlePlaceOrder}
-                                    disabled={processingOrder || isCartEmpty() || !selectedAddress || !paymentMethod}
-                                    className="w-full mt-6 bg-emerald-600 text-white py-4 rounded-xl text-xl font-bold hover:bg-emerald-700 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                >
-                                    {processingOrder ? (
-                                        <>
-                                            <LoadingSpinner /> Placing Order...
-                                        </>
-                                    ) : (
-                                        `Submit Order (${totalQuantity})`
-                                    )}
+                        <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-gray-100 p-6 sm:p-8">
+                            <h2 className="text-xl font-bold text-gray-900 mb-6 uppercase tracking-tight">Payment methods</h2>
+                            <div className="space-y-0 border border-gray-100 rounded-xl overflow-hidden">
+                                <label className={`flex items-center p-5 cursor-pointer transition-colors border-b border-gray-100 hover:bg-gray-50 ${paymentMethod === 'card' ? 'bg-gray-50/80' : ''}`}>
+                                    <input
+                                        type="radio"
+                                        name="payment"
+                                        value="card"
+                                        className="w-5 h-5 accent-[#fb7701] mr-4 cursor-pointer"
+                                        checked={paymentMethod === 'card'}
+                                        onChange={() => setPaymentMethod('card')}
+                                    />
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <span className="font-bold text-gray-800 text-sm sm:text-base tracking-tight">Card</span>
+                                        <div className="flex gap-1.5 items-center">
+                                            <div className="w-8 h-5 bg-[#1434CB] rounded-sm flex items-center justify-center text-[7px] text-white font-black italic">VISA</div>
+                                            <div className="w-8 h-5 bg-[#EB001B] rounded-sm flex items-center justify-center text-[7px] text-white font-black italic">MC</div>
+                                            <div className="w-8 h-5 bg-[#0070D1] rounded-sm flex items-center justify-center text-[7px] text-white font-black italic tracking-tighter">AMEX</div>
+                                        </div>
+                                        <span className="text-[10px] sm:text-xs text-gray-400 font-medium ml-1">Secure Stripe Checkout</span>
+                                    </div>
+                                </label>
+
+                                <label className={`flex items-center p-5 cursor-pointer transition-colors hover:bg-gray-50 ${paymentMethod === 'cod' ? 'bg-gray-50/80' : ''}`}>
+                                    <input
+                                        type="radio"
+                                        name="payment"
+                                        value="cod"
+                                        className="w-5 h-5 accent-[#fb7701] mr-4 cursor-pointer"
+                                        checked={paymentMethod === 'cod'}
+                                        onChange={() => setPaymentMethod('cod')}
+                                    />
+                                    <div className="flex items-center gap-3">
+                                        <span className="font-bold text-gray-800 text-sm sm:text-base tracking-tight">Cash on Delivery</span>
+                                        <div className="flex items-center gap-2 text-gray-400">
+                                            <MdLocalShipping size={18} />
+                                        </div>
+                                        <span className="text-[10px] sm:text-xs text-gray-400 font-medium ml-1">Pay when you receive the order</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="lg:col-span-4">
+                        <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-lg border border-gray-100 p-8 sticky top-24 overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-1.5 " />
+                            <h2 className="text-xl font-black mb-8 tracking-tight uppercase">Bill Details</h2>
+
+                            <div className="relative mb-8">
+                                <input
+                                    type="text"
+                                    placeholder="Promo Code"
+                                    value={couponCode}
+                                    onChange={(e) => setCouponCode(e.target.value)}
+                                    className="w-full bg-white border border-gray-100 rounded-xl px-5 py-4 focus:ring-1 focus:ring-emerald-500 text-gray-800 font-bold placeholder:text-gray-300 transition-all outline-none"
+                                />
+                                <button className="absolute right-2 top-2 bottom-2 bg-gray-900 text-white px-5 rounded-lg text-[10px] font-black uppercase hover:bg-black transition-colors tracking-widest">
+                                    Apply
                                 </button>
+                            </div>
 
-                                <div className="flex items-center gap-2 text-sm text-gray-600 mt-4">
-                                    <IoShieldCheckmark size={20} className="text-emerald-500" />
-                                    Never overpay with our Price Match Guarantee
+                            <div className="space-y-4 mb-8">
+                                <div className="flex justify-between text-gray-500 font-bold text-sm">
+                                    <span>Subtotal ({totalQuantity} items)</span>
+                                    <span className="text-gray-900">LKR {subtotal.toFixed(2)}</span>
                                 </div>
+                                {discountAmount > 0 && (
+                                    <div className="flex justify-between text-rose-500 font-bold text-sm">
+                                        <span>Discount</span>
+                                        <span>- LKR {discountAmount.toFixed(2)}</span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between items-center text-gray-500 font-bold text-sm">
+                                    <span>Shipping</span>
+                                    <span className="text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded text-[10px] font-black">FREE</span>
+                                </div>
+                            </div>
+
+                            <div className="pt-6 border-t-2 border-dashed border-gray-100 mb-8">
+                                <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mb-1">Total Payable</p>
+                                <p className="text-3xl font-black text-emerald-600 tracking-tighter">LKR {finalAmount.toLocaleString()}</p>
+                            </div>
+
+                            <button
+                                onClick={handlePlaceOrder}
+                                disabled={processingOrder || paymentLoading || !selectedAddress || !paymentMethod}
+                                className="w-full bg-emerald-500 text-white py-5 rounded-2xl text-lg font-black hover:bg-emerald-600 transition-all shadow-xl shadow-emerald-500/20 disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-3 uppercase tracking-wider"
+                            >
+                                {processingOrder ? 'Processing...' : (paymentMethod === 'card' ? 'Pay Now' : 'Place Order')}
+                            </button>
+
+                            <div className="mt-8 pt-6 border-t border-gray-50 flex flex-col gap-3">
+                                <div className="flex items-center gap-3 text-[11px] text-gray-400 font-bold uppercase tracking-widest">
+                                    <IoShieldCheckmark size={18} className="text-emerald-500" />
+                                    100% Secure Checkout
+                                </div>
+                                <p className="text-[10px] text-gray-400 leading-relaxed">
+                                    By placing your order, you agree to ShopEase <a href="#" className="underline">Terms</a>.
+                                </p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <EditAddressModal
-                address={editingAddress}
-                isOpen={isEditModalOpen}
-                onClose={() => {
-                    setIsEditModalOpen(false);
-                    setEditingAddress(null);
-                    fetchCheckoutData();
-                }}
-                onSave={handleUpdateAddress}
-                
-            />
-        </>
+        </div>
+    </div>
+
+    <EditAddressModal
+        address={editingAddress}
+        isOpen={isEditModalOpen}
+        onClose={() => { setIsEditModalOpen(false); setEditingAddress(null); fetchCheckoutData(); }}
+        onSave={handleUpdateAddress}
+    />
+</>
     );
 };
 

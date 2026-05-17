@@ -278,13 +278,25 @@ const UserDashboard = () => {
         return cartItems.reduce((sum, item) => sum + parseFloat(item.total_amount), 0).toFixed(2);
     };
 
-    const handleCheckoutClick = () => {
-        if (cartItems.length === 0) {
-            toast.warning("Your cart is empty. Please add items before checking out.");
-            return;
-        }
-        navigate('/checkout');
-    };
+  const handleCheckoutClick = () => {
+    const token = localStorage.getItem('token');
+    
+    // පරිශීලක login වී ඇත්දැයි පරීක්ෂා කරන්න
+    if (!token) {
+        toast.warning("කරුණාකර ගෙවීමට ඉදිරියට යාමට පෙර පුරන්න");
+        navigate('/login');
+        return;
+    }
+    
+    // කාර්ට් එකේ අයිතම් තිබේදැයි පරීක්ෂා කරන්න
+    if (cartItems.length === 0) {
+        toast.warning("ඔබේ කාර්ට් එක හිස්ය. කරුණාකර අයිතම් එකතු කරන්න.");
+        return;
+    }
+    
+    // Checkout පිටුවට යන්න (alert ඉවත් කර ඇත)
+   window.location.href = '/checkout';
+};
 
     return (
         <>

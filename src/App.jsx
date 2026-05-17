@@ -33,6 +33,12 @@ import Cart from "./pages/Cart";
 import CheckoutPage from "./pages/CheckoutPage";
 import ShippingAddressPage from "./pages/ShippingAddressPage";
 import UserProfilePage from "./pages/UserProfilePage";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancel from "./pages/PaymentCancel";
+import OrderSuccess from './pages/OrderSuccess';
+import OrderCancel from './pages/OrderCancel';
+import OrdersPage from "./pages/OrdersPage";
+import OrderDetailsPage from "./pages/OrderDetailsPage";
 
 
 
@@ -78,15 +84,21 @@ function App() {
                 <Route path="/productDiscount" element={<ProductDiscount />} />
                 <Route path="/productDiscountForm" element={<ProductDiscountForm />} />
                 <Route path="/cart" element={<Cart />} />
-                 <Route path="/shipping-addresses" element={<ShippingAddressPage />} />
-                 <Route path="/profile" element={<UserProfilePage />} />
-                 <Route path="/" element={
-                    
-                        <UserDashboard />
-                   
+                <Route path="/shipping-addresses" element={<ShippingAddressPage />} />
+                <Route path="/profile" element={<UserProfilePage />} />
+                <Route path="/payment-success" element={<PaymentSuccess />} />
+                <Route path="/payment-cancel" element={<PaymentCancel />} />
+                <Route path="/order-success" element={<OrderSuccess />} />
+                <Route path="/order-cancel" element={<OrderCancel />} />
+                <Route path="/orders" element={<OrdersPage />} />
+                <Route path="/orders/:orderId" element={<OrderDetailsPage />} />
+                <Route path="/" element={
+
+                    <UserDashboard />
+
                 } />
 
-                  <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/seller" element={
                     <ProtectedRoute allowedRoles={['super_admin']}>
                         <SellerSave />
@@ -137,7 +149,7 @@ function App() {
                     </ProtectedRoute>
                 } />
 
-               
+
             </Routes>
         </Router>
     );
