@@ -271,6 +271,7 @@ export const orderApi = {
     },
 
     cancelOrder: (orderId) => httpRequest.put(`/orders/cancel/${orderId}`),
+    
 };
 
 export const orderItemApi = {

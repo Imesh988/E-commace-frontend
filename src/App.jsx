@@ -39,6 +39,7 @@ import OrderSuccess from './pages/OrderSuccess';
 import OrderCancel from './pages/OrderCancel';
 import OrdersPage from "./pages/OrdersPage";
 import OrderDetailsPage from "./pages/OrderDetailsPage";
+import AdminOrdersPage from "./pages/AdminOrdersPage";
 
 
 
@@ -92,6 +93,7 @@ function App() {
                 <Route path="/order-cancel" element={<OrderCancel />} />
                 <Route path="/orders" element={<OrdersPage />} />
                 <Route path="/orders/:orderId" element={<OrderDetailsPage />} />
+                <Route path="/super-admin/orders" element={<AdminOrdersPage />} />
                 <Route path="/" element={
 
                     <UserDashboard />

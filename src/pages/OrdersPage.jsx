@@ -33,20 +33,38 @@ const OrdersPage = () => {
     const [activeTab, setActiveTab] = useState('active');
     const navigate = useNavigate();
 
-    const fetchOrders = async () => {
-        try {
-            setLoading(true);
-            const response = await orderApi.getAllOrders();
-            const ordersArray = response.data?.data || response.data?.orders || [];
-            setOrders(ordersArray);
-        } catch (error) {
-            console.error('Failed to fetch orders:', error);
-            toast.error('Failed to fetch orders');
-            setOrders([]);
-        } finally {
-            setLoading(false);
+   const fetchOrders = async () => {
+    try {
+        setLoading(true);
+        const response = await orderApi.getAllOrders();
+        const ordersArray = response.data?.data || response.data?.orders || [];
+        
+        const userStr = localStorage.getItem('user');  
+        let currentUserId = null;
+        
+        if (userStr) {
+            try {
+                const userObj = JSON.parse(userStr);
+                currentUserId = userObj.user_id;
+            } catch(e) { console.error(e); }
         }
-    };
+        
+        if (!currentUserId) {
+            currentUserId = localStorage.getItem('user_id');
+        }
+        
+        console.log("Current user ID:", currentUserId);
+        
+        const userOrders = ordersArray.filter(order => order.user_id == currentUserId);
+        setOrders(userOrders);
+    } catch (error) {
+        console.error('Failed to fetch orders:', error);
+        toast.error('Failed to fetch orders');
+        setOrders([]);
+    } finally {
+        setLoading(false);
+    }
+};
 
     const getFilteredOrders = () => {
         return activeTab === 'active' 
