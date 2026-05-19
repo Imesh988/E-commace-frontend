@@ -93,7 +93,7 @@ function App() {
                 <Route path="/order-cancel" element={<OrderCancel />} />
                 <Route path="/orders" element={<OrdersPage />} />
                 <Route path="/orders/:orderId" element={<OrderDetailsPage />} />
-                <Route path="/super-admin/orders" element={<AdminOrdersPage />} />
+                {/* <Route path="/super-admin/orders" element={<AdminOrdersPage />} /> */}
                 <Route path="/" element={
 
                     <UserDashboard />
@@ -104,6 +104,11 @@ function App() {
                 <Route path="/seller" element={
                     <ProtectedRoute allowedRoles={['super_admin']}>
                         <SellerSave />
+                    </ProtectedRoute>
+                } />
+                 <Route path="/adminorders" element={
+                    <ProtectedRoute allowedRoles={['super_admin']}>
+                        <AdminOrdersPage />
                     </ProtectedRoute>
                 } />
                 <Route path="/sellerForm" element={

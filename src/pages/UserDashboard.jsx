@@ -23,7 +23,7 @@ const UserDashboard = () => {
     const [cartLoading, setCartLoading] = useState(false);
     const isAddingRef = useRef(false);
     const cartRef = useRef(null);
-    const lastToastId = useRef(null); // Ref to store the ID of the last toast
+    const lastToastId = useRef(null); 
 
     const location = useLocation();
     const navigate = useNavigate();
@@ -64,20 +64,16 @@ const UserDashboard = () => {
         console.log("🟢 Full response:", response);
         console.log("🟢 response.data:", response.data);
         
-        // ✅ නිවැරදිව data extract කරන එක
         let receivedData = [];
         
-        // Case 1: response.data is directly the array (after interceptor)
         if (Array.isArray(response.data)) {
             receivedData = response.data;
             console.log("✅ Case 1: response.data is array, length:", receivedData.length);
         }
-        // Case 2: response.data.data is array (original backend response)
         else if (response.data && Array.isArray(response.data.data)) {
             receivedData = response.data.data;
             console.log("✅ Case 2: response.data.data is array, length:", receivedData.length);
         }
-        // Case 3: response is array
         else if (Array.isArray(response)) {
             receivedData = response;
             console.log("✅ Case 3: response is array, length:", receivedData.length);
@@ -138,7 +134,7 @@ const UserDashboard = () => {
         if (isAddingRef.current) {
             return;
         }
-        isAddingRef.current = true; // Set flag to prevent multiple rapid clicks
+        isAddingRef.current = true; 
 
         const token = localStorage.getItem('token');
         setAddingToCart(prev => ({ ...prev, [product.image_id]: true }));
@@ -194,8 +190,7 @@ const UserDashboard = () => {
                     }
                     return updatedCart;
                 });
-                // Ensure toast is only shown once after the state update
-                // Clear any previous toasts to prevent stacking
+                
                 if (lastToastId.current) {
                     toast.dismiss(lastToastId.current);
                 }
@@ -214,7 +209,6 @@ const UserDashboard = () => {
     console.log('Request data:', error.config?.data);
     console.log('=========================');
     
-    // Show user friendly message
     if (error.response?.status === 401) {
         toast.error('Please login to add items to cart');
     } else if (error.response?.data?.message) {
@@ -229,7 +223,7 @@ const UserDashboard = () => {
             setTimeout(() => {
                 isAddingRef.current = false;
                 setAddingToCart(prev => ({ ...prev, [product.image_id]: false }));
-            }, 500); // Reduced timeout for quicker re-enable
+            }, 500);
         }
     };
 
@@ -281,20 +275,17 @@ const UserDashboard = () => {
   const handleCheckoutClick = () => {
     const token = localStorage.getItem('token');
     
-    // පරිශීලක login වී ඇත්දැයි පරීක්ෂා කරන්න
     if (!token) {
-        toast.warning("කරුණාකර ගෙවීමට ඉදිරියට යාමට පෙර පුරන්න");
+        toast.warning("please loging ");
         navigate('/login');
         return;
     }
     
-    // කාර්ට් එකේ අයිතම් තිබේදැයි පරීක්ෂා කරන්න
-    if (cartItems.length === 0) {
-        toast.warning("ඔබේ කාර්ට් එක හිස්ය. කරුණාකර අයිතම් එකතු කරන්න.");
-        return;
-    }
+    // if (cartItems.length === 0) {
+    //     toast.warning("ඔබේ කාර්ට් එක හිස්ය. කරුණාකර අයිතම් එකතු කරන්න.");
+    //     return;
+    // }
     
-    // Checkout පිටුවට යන්න (alert ඉවත් කර ඇත)
    window.location.href = '/checkout';
 };
 

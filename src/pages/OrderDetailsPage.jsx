@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { orderApi, productImageApi } from '../services/api';
-import Navbar from '../layout/Navbar';
+import AfterNavbar from '../layout/AfterNavbar';
 import { toast } from 'react-toastify';
 import { 
     FiPackage, FiMapPin, FiCreditCard, FiArrowLeft, 
@@ -100,7 +100,7 @@ const OrderDetailsPage = () => {
 
     return (
         <div className="bg-slate-50 min-h-screen font-sans antialiased text-slate-900">
-            <Navbar />
+            <AfterNavbar />
             
             <div className="container mx-auto px-4 py-12">
                  <div className="fixed inset-0 overflow-hidden pointer-events-none">

@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { BiLogOut, BiUserPlus } from "react-icons/bi";
 import { FaUser } from "react-icons/fa";
 import { HiUserGroup } from "react-icons/hi";
+import { FiPackage } from "react-icons/fi";
+import { SiHomebridge } from "react-icons/si";
 
 export const SuperAdminNavbar = ({ onLogout, profile }) => {
     const navigate = useNavigate();
@@ -57,8 +59,14 @@ export const SuperAdminNavbar = ({ onLogout, profile }) => {
                                 <span>Users  </span>
                             </button>
 
-                             <button onClick={() => navigate('/super-admin/dashboard')} className={navBtnStyle}>
-                                <div className={iconBoxStyle}><BiUserPlus className="text-[#4a634d]" /></div>
+                           
+
+                            <button onClick={() => navigate('/adminorders')} className={navBtnStyle}>
+                                <div className={iconBoxStyle}><FiPackage className="text-[#4a634d]" /></div>
+                                <span>Orders </span>
+                            </button>
+                              <button onClick={() => navigate('/super-admin/dashboard')} className={navBtnStyle}>
+                                <div className={iconBoxStyle}><SiHomebridge className="text-[#4a634d]" /></div>
                                 <span>Dashboard </span>
                             </button>
                         </div>

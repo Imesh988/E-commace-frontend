@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from 'react-router-dom';
 import { orderApi } from "../services/api";
 import { toast } from "react-toastify";
-import Navbar from "../layout/Navbar";
+import AfterNavbar from "../layout/AfterNavbar";
 
 // Enhanced Order Status Badge
 const OrderStatusBadge = ({ status }) => {
@@ -112,7 +112,7 @@ const OrdersPage = () => {
 
     return (
         <div className="min-h-screen bg-[#f8fafc] pb-20">
-            <Navbar />
+               <AfterNavbar  />
             
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                  <div className="absolute top-0 left-0 w-80 h-80 bg-emerald-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>

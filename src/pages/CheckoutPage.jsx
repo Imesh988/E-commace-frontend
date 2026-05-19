@@ -1,4 +1,3 @@
-// src/pages/CheckoutPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../layout/Navbar';
@@ -9,7 +8,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { CiShoppingCart } from 'react-icons/ci';
 import { ArrowLeft } from 'lucide-react';
-import { FaEdit } from "react-icons/fa";
+import AfterNavbar from '../layout/AfterNavbar';
 
 const BASE_URL = "http://localhost:5000";
 
@@ -151,7 +150,6 @@ const CheckoutPage = () => {
     const [createdOrderId, setCreatedOrderId] = useState(null);
 
 
-    // ✅ THIS MUST BE THE VERY FIRST useEffect IN CheckoutPage
     useEffect(() => {
         console.log("🔴🔴🔴 CHECKING FOR STRIPE RETURN - FULL URL:", window.location.href);
 
@@ -162,7 +160,6 @@ const CheckoutPage = () => {
         console.log("session_id:", sessionId);
         console.log("order_id:", orderId);
 
-        // If we have both session_id and order_id in URL
         if (sessionId && orderId) {
             console.log("✅✅✅ STRIPE RETURN DETECTED! Clearing cart...");
 
@@ -170,7 +167,6 @@ const CheckoutPage = () => {
                 try {
                     const token = localStorage.getItem('token');
 
-                    // Clear cart from API
                     const clearResponse = await fetch('http://localhost:5000/api/v1/cart/clear', {
                         method: 'DELETE',
                         headers: {
@@ -180,31 +176,26 @@ const CheckoutPage = () => {
                     });
                     console.log("Cart clear response:", clearResponse.status);
 
-                    // Clear all local storage
                     localStorage.removeItem('guestCart');
                     localStorage.removeItem('cartItems');
                     sessionStorage.removeItem('pendingCart');
                     sessionStorage.removeItem('pendingOrderId');
                     sessionStorage.removeItem('checkoutCartData');
 
-                    // Update navbar
                     window.dispatchEvent(new Event('cart-updated'));
                     window.dispatchEvent(new CustomEvent('cart-updated'));
 
                     toast.success('Payment successful! Order confirmed.');
 
-                    // Force reload cart state in dashboard
-                    // Clear the cartItems state in CheckoutPage
+                    
                     setCartItems([]);
 
-                    // Redirect to orders page after 1 second
                     setTimeout(() => {
                         window.location.href = `/orders/${orderId}`;
                     }, 1000);
 
                 } catch (error) {
                     console.error("Error clearing cart:", error);
-                    // Still redirect even if clear fails
                     window.location.href = `/orders/${orderId}`;
                 }
             };
@@ -810,7 +801,8 @@ const CheckoutPage = () => {
     if (isCartEmpty() && !sessionStorage.getItem('checkoutCartData')) {
         return (
             <>
-                <Navbar />
+            <AfterNavbar />
+
                 <div className="bg-gray-50 min-h-screen py-8">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <h1 className="text-3xl font-extrabold text-gray-900 mb-8">Checkout</h1>
@@ -829,6 +821,9 @@ const CheckoutPage = () => {
 
     return (
       <>
+
+                   
+
     <ToastContainer position="top-right" autoClose={3000} hideProgressBar newestOnTop closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme="light" />
 
     <PaymentLoadingModal isOpen={paymentLoading} message="Redirecting to secure payment gateway..." />
@@ -842,7 +837,7 @@ const CheckoutPage = () => {
         </div>
 
         <div className="relative z-10">
-            <Navbar />
+               <AfterNavbar />
 
             <div className="max-w-[1550px] mx-auto px-4 sm:px-6 lg:px-10 pt-10">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
