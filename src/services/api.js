@@ -339,3 +339,15 @@ export const paymentApi = {
         }
     }
 };
+
+export const returnApi = {
+    createReturn : (returnDetails) => httpRequest.post('/returns/create', returnDetails),
+    getMyReturns : () => httpRequest.get('/returns/my-returns')
+};
+
+
+export const adminRemark = {
+    getAllReturns: () => httpRequest.get('/admin/returns'),
+    updateReturnStatus: (returnId, status) => httpRequest.put(`/admin/returns/${returnId}`, { status }),
+    processRefund: (refundDetails) => httpRequest.post('/admin/refunds', refundDetails)
+};

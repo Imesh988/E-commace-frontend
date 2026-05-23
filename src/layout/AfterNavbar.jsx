@@ -50,7 +50,6 @@ export const Navbar = () => {
             `}>
                 <div className="flex justify-between items-center h-20">
 
-                    {/* Logo - Original amber style */}
                     <div
                         className="flex-shrink-0 flex items-center gap-3 group cursor-pointer"
                         onClick={() => navigate('/user/dashboard')}
@@ -71,7 +70,6 @@ export const Navbar = () => {
                         </div>
                     </div>
 
-                    {/* Action Buttons - for logged in users */}
                     <div className="flex items-center gap-2">
                         {token ? (
                             <div className="flex items-center gap-3">

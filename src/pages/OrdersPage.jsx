@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { orderApi } from "../services/api";
 import { toast } from "react-toastify";
 import AfterNavbar from "../layout/AfterNavbar";
+import ReturnModal from "../pages/ReturnModal";
 
-// Enhanced Order Status Badge
 const OrderStatusBadge = ({ status }) => {
     const statusConfig = {
         1: { label: 'Pending', color: 'bg-amber-100 text-amber-700 border-amber-200' },
@@ -27,44 +27,56 @@ const LoadingSpinner = () => (
     </div>
 );
 
+const ReturnStatusBadge = ({ status }) => {
+    if (status === null || status === undefined) return null;
+    const config = {
+        0: { label: 'Return Pending', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
+        1: { label: 'Return Approved', color: 'bg-green-100 text-green-700 border-green-200' },
+        2: { label: 'Return Rejected', color: 'bg-red-100 text-red-700 border-red-200' },
+        3: { label: 'Refunded', color: 'bg-blue-100 text-blue-700 border-blue-200' }
+    };
+    const { label, color } = config[status] || config[0];
+    return (
+        <span className={`px-2 py-1 rounded-lg text-[10px] uppercase tracking-wider font-bold border ${color}`}>
+            {label}
+        </span>
+    );
+};
+
 const OrdersPage = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('active');
+    const [showReturnModal, setShowReturnModal] = useState(false);
+    const [selectedOrder, setSelectedOrder] = useState(null);
     const navigate = useNavigate();
 
-   const fetchOrders = async () => {
-    try {
-        setLoading(true);
-        const response = await orderApi.getAllOrders();
-        const ordersArray = response.data?.data || response.data?.orders || [];
-        
-        const userStr = localStorage.getItem('user');  
-        let currentUserId = null;
-        
-        if (userStr) {
-            try {
-                const userObj = JSON.parse(userStr);
-                currentUserId = userObj.user_id;
-            } catch(e) { console.error(e); }
+    const fetchOrders = async () => {
+        try {
+            setLoading(true);
+            const response = await orderApi.getAllOrders();
+            const ordersArray = response.data?.data || response.data?.orders || [];
+            const userStr = localStorage.getItem('user');
+            let currentUserId = null;
+            if (userStr) {
+                try {
+                    const userObj = JSON.parse(userStr);
+                    currentUserId = userObj.user_id;
+                } catch(e) { console.error(e); }
+            }
+            if (!currentUserId) {
+                currentUserId = localStorage.getItem('user_id');
+            }
+            const userOrders = ordersArray.filter(order => order.user_id == currentUserId);
+            setOrders(userOrders);
+        } catch (error) {
+            console.error('Failed to fetch orders:', error);
+            toast.error('Failed to fetch orders');
+            setOrders([]);
+        } finally {
+            setLoading(false);
         }
-        
-        if (!currentUserId) {
-            currentUserId = localStorage.getItem('user_id');
-        }
-        
-        console.log("Current user ID:", currentUserId);
-        
-        const userOrders = ordersArray.filter(order => order.user_id == currentUserId);
-        setOrders(userOrders);
-    } catch (error) {
-        console.error('Failed to fetch orders:', error);
-        toast.error('Failed to fetch orders');
-        setOrders([]);
-    } finally {
-        setLoading(false);
-    }
-};
+    };
 
     const getFilteredOrders = () => {
         return activeTab === 'active' 
@@ -85,6 +97,16 @@ const OrdersPage = () => {
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to cancel order');
         }
+    };
+
+    const handleReturnClick = (order) => {
+        setSelectedOrder(order);
+        setShowReturnModal(true);
+    };
+
+    const handleReturnSuccess = () => {
+        toast.info("Return request sent. You can track it in My Returns page.");
+        fetchOrders();
     };
 
     useEffect(() => {
@@ -112,23 +134,17 @@ const OrdersPage = () => {
 
     return (
         <div className="min-h-screen bg-[#f8fafc] pb-20">
-               <AfterNavbar  />
-            
+            <AfterNavbar />
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                 <div className="absolute top-0 left-0 w-80 h-80 bg-emerald-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>
+                <div className="absolute top-0 left-0 w-80 h-80 bg-emerald-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>
                 <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000 z-0"></div>
                 <div className="absolute bottom-0 right-0 w-72 h-72 bg-emerald-100 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000 z-0"></div>
                 <div className="absolute bottom-1/4 right-1/2 w-64 h-64 bg-yellow-100 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>
             </div>
 
             <div className="max-w-[2440px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-28">
-                
-                {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
-                    <div>
-                       
-                    </div>
-
+                    <div></div>
                     <div className="flex items-center gap-3 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-200/60">
                         <button
                             onClick={() => setActiveTab('active')}
@@ -181,9 +197,11 @@ const OrdersPage = () => {
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                                             </svg>
                                         </div>
-                                        <OrderStatusBadge status={order.status} />
+                                        <div className="flex flex-col items-end gap-1">
+                                            <OrderStatusBadge status={order.status} />
+                                            <ReturnStatusBadge status={order.return_status} />
+                                        </div>
                                     </div>
-                                    
                                     <div className="space-y-1">
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Order Reference</p>
                                         <p className="text-sm font-mono font-bold text-slate-700">
@@ -227,12 +245,30 @@ const OrdersPage = () => {
                                             Cancel Order
                                         </button>
                                     )}
+
+                                    {order.status === 4 && activeTab !== 'cancelled' && order.return_status === null && (
+                                        <button
+                                            onClick={() => handleReturnClick(order)}
+                                            className="col-span-2 py-2.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-xl hover:bg-emerald-100 transition-colors"
+                                        >
+                                            Return Order
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))}
                     </div>
                 )}
             </div>
+
+            {showReturnModal && selectedOrder && (
+                <ReturnModal
+                    orderId={selectedOrder.order_id}
+                    shippingId={selectedOrder.shipping_id}
+                    onClose={() => setShowReturnModal(false)}
+                    onSuccess={handleReturnSuccess}
+                />
+            )}
 
             <style jsx>{`
                 @keyframes fadeIn {

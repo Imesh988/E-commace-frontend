@@ -40,6 +40,10 @@ import OrderCancel from './pages/OrderCancel';
 import OrdersPage from "./pages/OrdersPage";
 import OrderDetailsPage from "./pages/OrderDetailsPage";
 import AdminOrdersPage from "./pages/AdminOrdersPage";
+import AdminReturns from "./pages/AdminReturns";
+import CustomerReturns from "./pages/CustomerReturns";
+import ReturnedOrders from "./pages/ReturnedOrders";
+
 
 
 
@@ -93,6 +97,12 @@ function App() {
                 <Route path="/order-cancel" element={<OrderCancel />} />
                 <Route path="/orders" element={<OrdersPage />} />
                 <Route path="/orders/:orderId" element={<OrderDetailsPage />} />
+                <Route path="/returnorders" element={<ReturnedOrders />} />
+
+                <Route path="/customer/returns" element={<CustomerReturns />} />
+                <Route path="/admin/returns" element={<AdminReturns />} />
+
+                
                 {/* <Route path="/super-admin/orders" element={<AdminOrdersPage />} /> */}
                 <Route path="/" element={
 
@@ -106,7 +116,7 @@ function App() {
                         <SellerSave />
                     </ProtectedRoute>
                 } />
-                 <Route path="/adminorders" element={
+                <Route path="/adminorders" element={
                     <ProtectedRoute allowedRoles={['super_admin']}>
                         <AdminOrdersPage />
                     </ProtectedRoute>
