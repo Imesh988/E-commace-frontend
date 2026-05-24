@@ -8,8 +8,22 @@ const AdminReturns = () => {
   const [selectedReturn, setSelectedReturn] = useState(null);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [refundModalOpen, setRefundModalOpen] = useState(false);
-  const [statusForm, setStatusForm] = useState({ status: '', admin_remark: '', refund_amount: '' });
-  const [refundForm, setRefundForm] = useState({ payment_id: '', shipping_id: '', reason: '', tracking_no: '' });
+  
+  // Status form (used when updating status)
+  const [statusForm, setStatusForm] = useState({ 
+    status: '', 
+    admin_remark: '', 
+    refund_amount: '' 
+  });
+  
+  // Refund form (used when processing refund)
+  const [refundForm, setRefundForm] = useState({
+   
+    refund_amount: ''
+  });
+
+  // Store refund amount temporarily for each return (when approved)
+  const [tempRefundAmounts, setTempRefundAmounts] = useState({});
 
   useEffect(() => {
     fetchAllReturns();
@@ -20,7 +34,6 @@ const AdminReturns = () => {
     try {
       const res = await adminRemark.getAllReturns();
       console.log('return data ', res.data);
-      
       setReturns(res.data.returns || []);
     } catch (err) {
       setError('Failed to load returns');
@@ -45,7 +58,7 @@ const AdminReturns = () => {
     setStatusForm({
       status: ret.status.toString(),
       admin_remark: ret.admin_remark || '',
-      refund_amount: ret.refund_amount || ''
+      refund_amount: tempRefundAmounts[ret.return_id] || ''
     });
     setStatusModalOpen(true);
   };
@@ -53,10 +66,20 @@ const AdminReturns = () => {
   const handleStatusChange = async (e) => {
     e.preventDefault();
     try {
-      await adminRemark.updateReturnStatus(selectedReturn.return_id, parseInt(statusForm.status), {
-        admin_remark: statusForm.admin_remark,
-        refund_amount: statusForm.refund_amount
-      });
+      await adminRemark.updateReturnStatus(
+        selectedReturn.return_id,
+        parseInt(statusForm.status),
+        statusForm.admin_remark
+      );
+      
+      // If status is Approved (1), store the refund amount temporarily
+      if (parseInt(statusForm.status) === 1 && statusForm.refund_amount) {
+        setTempRefundAmounts(prev => ({
+          ...prev,
+          [selectedReturn.return_id]: statusForm.refund_amount
+        }));
+      }
+      
       alert('Status updated successfully');
       setStatusModalOpen(false);
       fetchAllReturns();
@@ -66,29 +89,47 @@ const AdminReturns = () => {
   };
 
   const openRefundModal = (ret) => {
-    if (ret.status !== 1) {
-      alert('Only approved returns can be refunded');
-      return;
-    }
-    setSelectedReturn(ret);
-    setRefundForm({ payment_id: '', shipping_id: '', reason: '', tracking_no: '' });
-    setRefundModalOpen(true);
-  };
+  if (ret.status !== 1) {
+    alert('Only approved returns can be refunded');
+    return;
+  }
+  setSelectedReturn(ret);
+  const savedAmount = tempRefundAmounts[ret.return_id] || '';
+  setRefundForm({ refund_amount: savedAmount });
+  setRefundModalOpen(true);
+};
 
-  const handleRefund = async (e) => {
-    e.preventDefault();
-    try {
-      await adminRemark.processRefund({
-        return_id: selectedReturn.return_id,
-        ...refundForm
-      });
-      alert('Refund processed successfully');
-      setRefundModalOpen(false);
-      fetchAllReturns();
-    } catch (err) {
-      alert(err.response?.data?.message || 'Refund failed');
-    }
-  };
+const handleRefund = async (e) => {
+  e.preventDefault();
+  // Validate refund amount
+  const amount = parseFloat(refundForm.refund_amount);
+  if (isNaN(amount) || amount <= 0) {
+    alert('Please enter a valid refund amount');
+    return;
+  }
+
+  try {
+    console.log('Sending refund:', {
+      return_id: selectedReturn.return_id,
+      shipping_id: selectedReturn.shipping_id,
+      refund_amount: amount,
+      status: 1
+    });
+
+    await adminRemark.processRefund({
+      return_id: selectedReturn.return_id,
+      shipping_id: selectedReturn.shipping_id,
+      refund_amount: amount,
+      status: 1
+    });
+    alert('Refund processed successfully');
+    setRefundModalOpen(false);
+    fetchAllReturns();
+  } catch (err) {
+    console.error('Refund error:', err);
+    alert(err.response?.data?.message || 'Refund failed');
+  }
+};
 
   return (
     <div className="container mx-auto p-4">
@@ -122,7 +163,7 @@ const AdminReturns = () => {
                   <td className="border p-2">{ret.reason}</td>
                   <td className="border p-2">{getStatusText(ret.status)}</td>
                   <td className="border p-2">{ret.admin_remark || '-'}</td>
-                  <td className="border p-2">{ret.refund_amount || '-'}</td>
+                  <td className="border p-2">{tempRefundAmounts[ret.return_id] || '-'}</td>
                   <td className="border p-2 space-x-2">
                     <button onClick={() => openStatusModal(ret)} className="bg-yellow-500 text-white px-2 py-1 rounded text-sm">
                       Update Status
@@ -148,24 +189,36 @@ const AdminReturns = () => {
             <form onSubmit={handleStatusChange}>
               <div className="mb-3">
                 <label className="block text-sm">Status</label>
-                <select value={statusForm.status} onChange={(e) => setStatusForm({ ...statusForm, status: e.target.value })} className="border p-2 w-full rounded" required>
+                <select 
+                  value={statusForm.status} 
+                  onChange={(e) => setStatusForm({ ...statusForm, status: e.target.value })} 
+                  className="border p-2 w-full rounded" required
+                >
                   <option value="0">Pending</option>
                   <option value="1">Approved</option>
                   <option value="2">Rejected</option>
                   <option value="3">Refunded</option>
                 </select>
               </div>
+
+           
+
               <div className="mb-3">
                 <label className="block text-sm">Admin Remark</label>
-                <textarea value={statusForm.admin_remark} onChange={(e) => setStatusForm({ ...statusForm, admin_remark: e.target.value })} className="border p-2 w-full rounded" rows="2"/>
+                <textarea 
+                  value={statusForm.admin_remark} 
+                  onChange={(e) => setStatusForm({ ...statusForm, admin_remark: e.target.value })} 
+                  className="border p-2 w-full rounded" rows="2" 
+                />
               </div>
-              <div className="mb-3">
-                <label className="block text-sm">Refund Amount (if approved)</label>
-                <input type="number" step="0.01" value={statusForm.refund_amount} onChange={(e) => setStatusForm({ ...statusForm, refund_amount: e.target.value })} className="border p-2 w-full rounded"/>
-              </div>
+
               <div className="flex justify-end space-x-2">
-                <button type="button" onClick={() => setStatusModalOpen(false)} className="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
-                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
+                <button type="button" onClick={() => setStatusModalOpen(false)} className="bg-gray-400 text-white px-4 py-2 rounded">
+                  Cancel
+                </button>
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+                  Save
+                </button>
               </div>
             </form>
           </div>
@@ -173,35 +226,45 @@ const AdminReturns = () => {
       )}
 
       {/* Modal: Process Refund */}
-      {refundModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded w-96">
-            <h2 className="text-xl font-bold mb-4">Process Refund for {selectedReturn?.return_id}</h2>
-            <form onSubmit={handleRefund}>
-              <div className="mb-3">
-                <label className="block text-sm">Payment ID</label>
-                <input type="text" value={refundForm.payment_id} onChange={(e) => setRefundForm({ ...refundForm, payment_id: e.target.value })} className="border p-2 w-full rounded" required/>
-              </div>
-              <div className="mb-3">
-                <label className="block text-sm">Shipping ID</label>
-                <input type="text" value={refundForm.shipping_id} onChange={(e) => setRefundForm({ ...refundForm, shipping_id: e.target.value })} className="border p-2 w-full rounded" required/>
-              </div>
-              <div className="mb-3">
-                <label className="block text-sm">Reason for Refund</label>
-                <textarea value={refundForm.reason} onChange={(e) => setRefundForm({ ...refundForm, reason: e.target.value })} className="border p-2 w-full rounded" required rows="2"/>
-              </div>
-              <div className="mb-3">
-                <label className="block text-sm">Tracking Number</label>
-                <input type="text" value={refundForm.tracking_no} onChange={(e) => setRefundForm({ ...refundForm, tracking_no: e.target.value })} className="border p-2 w-full rounded" required/>
-              </div>
-              <div className="flex justify-end space-x-2">
-                <button type="button" onClick={() => setRefundModalOpen(false)} className="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
-                <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded">Confirm Refund</button>
-              </div>
-            </form>
-          </div>
+    {refundModalOpen && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="bg-white p-6 rounded w-96">
+      <h2 className="text-xl font-bold mb-4">
+        Process Refund for {selectedReturn?.return_id}
+      </h2>
+      <form onSubmit={handleRefund}>
+        {/* refund_amount only */}
+        <div className="mb-3">
+          <label className="block text-sm">Refund Amount</label>
+          <input
+            type="number"
+            step="0.01"
+            value={refundForm.refund_amount}
+            onChange={(e) => setRefundForm({ refund_amount: e.target.value })}
+            className="border p-2 w-full rounded"
+            required
+          />
         </div>
-      )}
+
+        <div className="flex justify-end space-x-2">
+          <button
+            type="button"
+            onClick={() => setRefundModalOpen(false)}
+            className="bg-gray-400 text-white px-4 py-2 rounded"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="bg-green-600 text-white px-4 py-2 rounded"
+          >
+            Confirm Refund
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
     </div>
   );
 };

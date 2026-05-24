@@ -55,9 +55,36 @@ const OrdersPage = () => {
         try {
             setLoading(true);
             const response = await orderApi.getAllOrders();
-            const ordersArray = response.data?.data || response.data?.orders || [];
-            const userStr = localStorage.getItem('user');
+            console.log("Full API response:", response);
+
+            // Extract orders array
+            let ordersArray = [];
+            if (response.data?.data && Array.isArray(response.data.data)) {
+                ordersArray = response.data.data;
+            } else if (response.data?.orders && Array.isArray(response.data.orders)) {
+                ordersArray = response.data.orders;
+            } else if (Array.isArray(response.data)) {
+                ordersArray = response.data;
+            } else {
+                console.warn("Unknown response structure:", response.data);
+                ordersArray = [];
+            }
+
+            console.log("Extracted ordersArray length:", ordersArray.length);
+
+            // Remove duplicate orders (same order_id) – fixes React key warning
+            const uniqueOrdersMap = new Map();
+            ordersArray.forEach(order => {
+                if (order.order_id && !uniqueOrdersMap.has(order.order_id)) {
+                    uniqueOrdersMap.set(order.order_id, order);
+                }
+            });
+            const uniqueOrders = Array.from(uniqueOrdersMap.values());
+            console.log("After deduplication length:", uniqueOrders.length);
+
+            // Get current user ID
             let currentUserId = null;
+            const userStr = localStorage.getItem('user');
             if (userStr) {
                 try {
                     const userObj = JSON.parse(userStr);
@@ -67,7 +94,14 @@ const OrdersPage = () => {
             if (!currentUserId) {
                 currentUserId = localStorage.getItem('user_id');
             }
-            const userOrders = ordersArray.filter(order => order.user_id == currentUserId);
+            console.log("Current user ID:", currentUserId);
+
+            // Filter orders by user ID
+            const userOrders = uniqueOrders.filter(order => {
+                return String(order.user_id) === String(currentUserId);
+            });
+            console.log("User orders count:", userOrders.length);
+
             setOrders(userOrders);
         } catch (error) {
             console.error('Failed to fetch orders:', error);
@@ -79,6 +113,7 @@ const OrdersPage = () => {
     };
 
     const getFilteredOrders = () => {
+        if (!Array.isArray(orders)) return [];
         return activeTab === 'active' 
             ? orders.filter(order => order.status !== 5) 
             : orders.filter(order => order.status === 5);
@@ -129,6 +164,8 @@ const OrdersPage = () => {
     };
 
     const filteredOrders = getFilteredOrders();
+    const activeCount = Array.isArray(orders) ? orders.filter(o => o.status !== 5).length : 0;
+    const cancelledCount = Array.isArray(orders) ? orders.filter(o => o.status === 5).length : 0;
 
     if (loading) return <LoadingSpinner />;
 
@@ -154,7 +191,7 @@ const OrdersPage = () => {
                                 : 'text-slate-500 hover:bg-slate-50'
                             }`}
                         >
-                            Active ({orders.filter(o => o.status !== 5).length})
+                            Active ({activeCount})
                         </button>
                         <button
                             onClick={() => setActiveTab('cancelled')}
@@ -164,7 +201,7 @@ const OrdersPage = () => {
                                 : 'text-slate-500 hover:bg-slate-50'
                             }`}
                         >
-                            Cancelled ({orders.filter(o => o.status === 5).length})
+                            Cancelled ({cancelledCount})
                         </button>
                     </div>
                 </div>
@@ -270,7 +307,7 @@ const OrdersPage = () => {
                 />
             )}
 
-            <style jsx>{`
+            <style>{`
                 @keyframes fadeIn {
                     from { opacity: 0; transform: translateY(20px); }
                     to { opacity: 1; transform: translateY(0); }

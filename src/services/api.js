@@ -258,7 +258,7 @@ export const shippingAddressApi = {
 export const orderApi = {
     // Backend routes: /api/orders/...
     placeOrder: (orderDetails) => httpRequest.post("/orders", orderDetails),
-    getAllOrders: () => httpRequest.get("/orders"),
+        getAllOrders: () => httpRequest.get("/orders"),
     getOrdersByUserId: (userId) => httpRequest.get(`/orders/user/${userId}`),
     getOrderDetails: (orderId) => httpRequest.get(`/orders/${orderId}`), // order, order_items, payments ලබාගැනීමට
     updateOrderStatus: (orderId, newStatus) => httpRequest.put(`/orders/status/${orderId}`, { new_status: newStatus }),
@@ -271,7 +271,9 @@ export const orderApi = {
     },
 
     cancelOrder: (orderId) => httpRequest.put(`/orders/cancel/${orderId}`),
-    
+    getDeliveryByOrderId: (orderId) => httpRequest.get(`/admin/delivery/${orderId}`),
+
+
 };
 
 export const orderItemApi = {
@@ -341,13 +343,19 @@ export const paymentApi = {
 };
 
 export const returnApi = {
-    createReturn : (returnDetails) => httpRequest.post('/returns/create', returnDetails),
-    getMyReturns : () => httpRequest.get('/returns/my-returns')
+    createReturn: (returnDetails) => httpRequest.post('/returns/create', returnDetails),
+    getMyReturns: () => httpRequest.get('/returns/my-returns')
 };
 
 
 export const adminRemark = {
     getAllReturns: () => httpRequest.get('/admin/returns'),
-    updateReturnStatus: (returnId, status) => httpRequest.put(`/admin/returns/${returnId}`, { status }),
-    processRefund: (refundDetails) => httpRequest.post('/admin/refunds', refundDetails)
+    updateReturnStatus: (returnId, status, adminRemark) =>
+        httpRequest.put(`/admin/update/${returnId}`, {
+            status,
+            admin_remark: adminRemark
+            // refund_amount යවන්න එපා
+        }),
+    processRefund: (refundDetails) => httpRequest.post('/admin/refunds', refundDetails),
+    updateTrackingNumber: (orderId, trackingNo) => httpRequest.put(`/admin/tracking/${orderId}`, { tracking_no: trackingNo }),
 };
