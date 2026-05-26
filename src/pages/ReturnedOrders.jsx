@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link } from 'react-router-dom';
 import { orderApi } from "../services/api";
 import { toast } from "react-toastify";
-import AfterNavbar from "../layout/AfterNavbar";
+import Navbar from "../layout/Navbar";
+
 
 const ReturnStatusBadge = ({ status }) => {
     if (status === null || status === undefined) return null;
@@ -97,11 +98,18 @@ const ReturnedOrders = () => {
 
     return (
         <div className="min-h-screen bg-[#f8fafc] pb-20">
-            <AfterNavbar />
+            <Navbar />
+
+             <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-0 left-0 w-80 h-80 bg-emerald-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>
+                <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000 z-0"></div>
+                <div className="absolute bottom-0 right-0 w-72 h-72 bg-emerald-100 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000 z-0"></div>
+                <div className="absolute bottom-1/4 right-1/2 w-64 h-64 bg-yellow-100 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>
+            </div>
             <div className="max-w-[2440px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-28">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-slate-900">My Return Requests</h1>
-                    <p className="text-slate-500 mt-2">Track and manage your return requests</p>
+                    {/* <h1 className="text-3xl font-bold text-slate-900">My Return Requests</h1>
+                    <p className="text-slate-500 mt-2">Track and manage your return requests</p> */}
                 </div>
 
                 <div className="flex flex-wrap gap-2 mb-8">

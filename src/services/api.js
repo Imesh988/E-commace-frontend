@@ -192,7 +192,6 @@ export const categoryAPI = {
 // import httpRequest from './httpRequest'; // You might need to adjust this path
 
 export const productImageApi = {
-
     createProductImage: (formData) => {
         return httpRequest.post("/product-image/create", formData, {
             headers: {
@@ -209,15 +208,13 @@ export const productImageApi = {
         });
     },
 
-    getProductImageById: (productImageId) => httpRequest.get(`/product-image/id/${productImageId}`),
+    getProductImageById: (productImageId) => httpRequest.get(`/product-image/find/${productImageId}`),
     getProductImageByText: (text) => httpRequest.get(`/product-image/search/${text}`),
     getProductImageByCategory: (categoryName) => httpRequest.get(`/product-image/category/${categoryName}`),
     deleteProductImage: (productImageId) => httpRequest.delete(`/product-image/delete/${productImageId}`),
     getAllProductImage: () => httpRequest.get("/product-image/all"),
-
     getProductImagesByProductId: (productId) => httpRequest.get(`/product-image/product/${productId}`),
 };
-
 export const ProductDiscountApi = {
     createProductDiscount: (productDiscount) => httpRequest.post("/product-discount/create", productDiscount),
     getAllProductDiscount: () => httpRequest.get("/product-discount/all"),

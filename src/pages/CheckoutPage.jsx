@@ -8,7 +8,8 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { CiShoppingCart } from 'react-icons/ci';
 import { ArrowLeft } from 'lucide-react';
-import AfterNavbar from '../layout/AfterNavbar';
+
+
 
 const BASE_URL = "http://localhost:5000";
 
@@ -21,8 +22,7 @@ const LoadingSpinner = () => (
 const PaymentLoadingModal = ({ isOpen, message }) => {
     if (!isOpen) return null;
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+<div className="fixed inset-0 bg-white/10 backdrop-blur-md flex items-center justify-center z-50">        <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
                 <div className="flex flex-col items-center text-center">
                     <div className="relative mb-6">
                         <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center">
@@ -39,7 +39,6 @@ const PaymentLoadingModal = ({ isOpen, message }) => {
         </div>
     );
 };
-
 const EditAddressModal = ({ address, isOpen, onClose, onSave }) => {
     const [formData, setFormData] = useState({
         recipient_name: '',
@@ -88,41 +87,58 @@ const EditAddressModal = ({ address, isOpen, onClose, onSave }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
-                <h2 className="text-2xl font-bold mb-4">Edit Shipping Address</h2>
+        /* මෙහි bg-black/20 සහ backdrop-blur-md මගින් පසුබිම Blur කරයි */
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all duration-300">
+            
+            {/* Modal Card එක */}
+            <div className="bg-white rounded-2xl p-8 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-white/20 animate-in fade-in zoom-in duration-200">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-black text-gray-800 uppercase tracking-tight">Edit Shipping Address</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">✕</button>
+                </div>
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Recipient Name</label>
-                        <input type="text" name="recipient_name" value={formData.recipient_name} onChange={handleChange} required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Recipient Name</label>
+                        <input type="text" name="recipient_name" value={formData.recipient_name} onChange={handleChange} required className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium text-gray-700" />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 1</label>
-                        <input type="text" name="address_line_1" value={formData.address_line_1} onChange={handleChange} required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
+
+                    <div className="grid grid-cols-1 gap-4">
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Address Line 1</label>
+                            <input type="text" name="address_line_1" value={formData.address_line_1} onChange={handleChange} required className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium text-gray-700" />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Address Line 2</label>
+                            <input type="text" name="address_line_2" value={formData.address_line_2} onChange={handleChange} className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium text-gray-700" />
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 2</label>
-                        <input type="text" name="address_line_2" value={formData.address_line_2} onChange={handleChange} className="w-full border border-gray-300 rounded-lg px-3 py-2" />
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">City</label>
+                            <input type="text" name="city" value={formData.city} onChange={handleChange} required className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium text-gray-700" />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">District</label>
+                            <input type="text" name="district" value={formData.district} onChange={handleChange} required className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium text-gray-700" />
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                        <input type="text" name="city" value={formData.city} onChange={handleChange} required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Postal Code</label>
+                            <input type="text" name="postal_code" value={formData.postal_code} onChange={handleChange} required className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium text-gray-700" />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Phone Number</label>
+                            <input type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} required className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 outline-none transition-all font-medium text-gray-700" />
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">District</label>
-                        <input type="text" name="district" value={formData.district} onChange={handleChange} required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
-                        <input type="text" name="postal_code" value={formData.postal_code} onChange={handleChange} required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                        <input type="tel" name="phone_number" value={formData.phone_number} onChange={handleChange} required className="w-full border border-gray-300 rounded-lg px-3 py-2" />
-                    </div>
-                    <div className="flex gap-3 pt-4">
-                        <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
-                        <button type="submit" disabled={loading} className="flex-1 bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 disabled:opacity-50">
+
+                    <div className="flex gap-3 pt-6">
+                        <button type="button" onClick={onClose} className="flex-1 px-4 py-3 bg-gray-100 rounded-xl text-gray-600 font-bold hover:bg-gray-200 transition-all uppercase text-xs tracking-widest">Cancel</button>
+                        <button type="submit" disabled={loading} className="flex-1 bg-emerald-500 text-white py-3 rounded-xl font-bold hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 disabled:opacity-50 transition-all uppercase text-xs tracking-widest">
                             {loading ? <LoadingSpinner /> : 'Save Changes'}
                         </button>
                     </div>
@@ -801,7 +817,7 @@ const CheckoutPage = () => {
     if (isCartEmpty() && !sessionStorage.getItem('checkoutCartData')) {
         return (
             <>
-            <AfterNavbar />
+            <Navbar />
 
                 <div className="bg-gray-50 min-h-screen py-8">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -837,7 +853,7 @@ const CheckoutPage = () => {
         </div>
 
         <div className="relative z-10">
-               <AfterNavbar />
+               <Navbar />
 
             <div className="max-w-[1550px] mx-auto px-4 sm:px-6 lg:px-10 pt-10">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

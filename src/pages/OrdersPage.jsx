@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from 'react-router-dom';
 import { orderApi } from "../services/api";
 import { toast } from "react-toastify";
-import AfterNavbar from "../layout/AfterNavbar";
 import ReturnModal from "../pages/ReturnModal";
+import Navbar from "../layout/Navbar";
 
 const OrderStatusBadge = ({ status }) => {
     const statusConfig = {
@@ -171,7 +171,8 @@ const OrdersPage = () => {
 
     return (
         <div className="min-h-screen bg-[#f8fafc] pb-20">
-            <AfterNavbar />
+            <Navbar
+ />
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-0 left-0 w-80 h-80 bg-emerald-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>
                 <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000 z-0"></div>

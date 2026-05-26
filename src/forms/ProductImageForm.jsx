@@ -9,8 +9,6 @@ import ProductImage from "../pages/ProductImage";
 import { CheckCircleIcon, XCircleIcon } from "lucide-react";
 
 const BASE_URL = "http://localhost:5000";
-const IMAGE_PATH = "/public/product/images/";
-const FULL_IMAGE_URL = `${BASE_URL}${IMAGE_PATH}`;
 
 const ProductImageForm = () => {
     const [productImages, setProductImages] = useState([]);
@@ -22,15 +20,14 @@ const ProductImageForm = () => {
         setLoading(true);
         try {
             const response = await productImageApi.getAllProductImage();
-            console.log(response);
+            console.log('orders item ' , response.data);
             
             const receivedData = response.data && response.data.data ? response.data.data : [];
             setProductImages(receivedData);
-            console.log(receivedData);
-
         } catch (error) {
             console.error("Fetch error:", error);
             setProductImages([]);
+            toast.error("Failed to load product images");
         } finally {
             setLoading(false);
         }
@@ -40,17 +37,36 @@ const ProductImageForm = () => {
         fetchProductImages();
     }, [fetchProductImages]);
 
-    const productImageDelete = async (id) => {
-       if(window.confirm('Are you sure you want to delete this product image ?')){
-        try {
-            await productImageApi.deleteProductImage(id);
-            alert("Product image deleted successfully!");
+    const handleSaveSuccess = (savedImage, oldImageId, shouldFullRefresh) => {
+        if (shouldFullRefresh) {
             fetchProductImages();
-        } catch (error) {
-            console.error("Delete Error:", error);
-            alert(error.response?.data?.message || "Delete Failed!");
+            return;
         }
-       }
+        if (oldImageId && savedImage) {
+            setProductImages(prev =>
+                prev.map(img => img.image_id === oldImageId ? savedImage : img)
+            );
+        } else if (savedImage) {
+            setProductImages(prev => {
+                const exists = prev.some(img => img.image_id === savedImage.image_id);
+                return exists ? prev : [savedImage, ...prev];
+            });
+        } else {
+            fetchProductImages();
+        }
+    };
+
+    const productImageDelete = async (id) => {
+        if (window.confirm("Are you sure you want to delete this product image?")) {
+            try {
+                await productImageApi.deleteProductImage(id);
+                toast.success("Product image deleted successfully");
+                setProductImages(prev => prev.filter(img => img.image_id !== id));
+            } catch (error) {
+                console.error("Delete Error:", error);
+                toast.error(error.response?.data?.msg || "Delete Failed");
+            }
+        }
     };
 
     const ProductImageColumns = [
@@ -61,7 +77,7 @@ const ProductImageForm = () => {
                     {row.image && (
                         <img
                             src={`${BASE_URL}${row.image.startsWith('/') ? row.image : `/${row.image}`}`}
-                            alt="img1"
+                            alt="product"
                             className="w-12 h-12 object-cover rounded-xl border-2 border-white shadow-sm"
                             onError={(e) => { e.target.src = "https://via.placeholder.com/50"; }}
                         />
@@ -123,7 +139,7 @@ const ProductImageForm = () => {
     ];
 
     const filteredProductImages = productImages.filter(imageItem =>
-        imageItem.product_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        imageItem.product_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         imageItem.image?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -135,22 +151,18 @@ const ProductImageForm = () => {
                 <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-100 rounded-full blur-[120px] opacity-60 pointer-events-none"></div>
 
                 <div className="relative z-10 flex flex-col gap-12 items-center">
-
                     <ProductImage
-                        onProductImageAdded={fetchProductImages}
-                        editingProductImage={editingProductImage}
-                        cancelEdit={() => setEditingProductImage(null)}
+                        editingImage={editingProductImage}
+                        onSaveSuccess={handleSaveSuccess}
+                        onCancel={() => setEditingProductImage(null)}
                     />
 
-                    <div className="w-full ">
-
+                    <div className="w-full">
                         <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6 px-6">
-
                             <h2 className="text-3xl font-bold text-green-600 flex items-center gap-3">
                                 <TbCategoryPlus />
                                 <span>Product Image Management</span>
                             </h2>
-
                             <div className="relative w-full md:w-96 group">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                     <CiSearch className="h-6 w-6 text-emerald-500 font-bold" />
@@ -159,12 +171,11 @@ const ProductImageForm = () => {
                                     type="text"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    placeholder="Search by category name..."
+                                    placeholder="Search by product name..."
                                     className="block w-full pl-12 pr-4 py-3 bg-white/60 border border-emerald-100 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500 backdrop-blur-md transition-all text-gray-700 shadow-sm placeholder:text-gray-400"
                                 />
                             </div>
                         </div>
-
                         <div className="backdrop-blur-xl p-8 overflow-hidden">
                             <DataTabale columns={ProductImageColumns} data={filteredProductImages} />
                         </div>
@@ -172,7 +183,7 @@ const ProductImageForm = () => {
                 </div>
             </div>
         </>
-    )
-}
+    );
+};
 
 export default ProductImageForm;
