@@ -43,6 +43,16 @@ import AdminOrdersPage from "./pages/AdminOrdersPage";
 import AdminReturns from "./pages/AdminReturns";
 import CustomerReturns from "./pages/CustomerReturns";
 import ReturnedOrders from "./pages/ReturnedOrders";
+import SellerDashboard from "./pages/SellerDashboard";
+import StockManagement from "./pages/StockManagement";
+import ProductManagement from "./pages/ProductManagement";
+import SellerApprovalList from "./pages/SellerApprovalList";
+import Pending from "./components/SellerPending";
+
+
+
+
+
 
 
 
@@ -61,18 +71,18 @@ function App() {
     return (
         <Router>
             <Routes>
-
+                 <Route path="/pending" element={<Pending />} />
                 <Route path="/userRegister" element={<UserRegister />} />
                 <Route path="/user" element={<UserForm />} />
-                {/* <Route path="/role" element={<RoleSave />} />
-                <Route path="/roleForm" element={<RoleForm />} /> */}
+                <Route path="/role" element={<RoleSave />} />
+                <Route path="/roleForm" element={<RoleForm />} />
                 <Route path="/superAdmin" element={<SuperAdminRegister />} />
                 <Route path="/superAdminForm" element={<SuperAdminForm />} />
                 <Route path="/navbar" element={<Navbar />} />
-                {/* <Route path="/seller" element={<SellerSave />} /> */}
-                {/* <Route path="/sellerForm" element={<SellerForm />} /> */}
-                {/* <Route path="/supplier" element={<SupplierSave />} />
-                <Route path="/supplierForm" element={<SupplierForm />} /> */}
+                <Route path="/seller" element={<SellerSave />} />
+                <Route path="/sellerForm" element={<SellerForm />} />
+                <Route path="/supplier" element={<SupplierSave />} />
+                <Route path="/supplierForm" element={<SupplierForm />} />
                 <Route path="/sellerHasRole" element={<SellerhasRoleSave />} />
                 <Route path="/sellerHasRoleForm" element={<SellerhasRoleForm />} />
                 <Route path="/stock" element={<StockSave />} />
@@ -98,9 +108,12 @@ function App() {
                 <Route path="/orders" element={<OrdersPage />} />
                 <Route path="/orders/:orderId" element={<OrderDetailsPage />} />
                 <Route path="/returnorders" element={<ReturnedOrders />} />
-
+                <Route path="/sellerApproved"  element={<SellerApprovalList/>}/>
                 <Route path="/customer/returns" element={<CustomerReturns />} />
                 <Route path="/admin/returns" element={<AdminReturns />} />
+                 <Route path="/sellerDashboard" element={<SellerDashboard />} />
+                 <Route path="/stockManagement" element={<StockManagement />} />
+                    <Route path="/productManagement" element={<ProductManagement />} />
 
                 
                 {/* <Route path="/super-admin/orders" element={<AdminOrdersPage />} /> */}
@@ -111,11 +124,11 @@ function App() {
                 } />
 
                 <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/seller" element={
+                {/* <Route path="/seller" element={
                     <ProtectedRoute allowedRoles={['super_admin']}>
                         <SellerSave />
                     </ProtectedRoute>
-                } />
+                } /> */}
                 <Route path="/adminorders" element={
                     <ProtectedRoute allowedRoles={['super_admin']}>
                         <AdminOrdersPage />

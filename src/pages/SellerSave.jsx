@@ -1,130 +1,103 @@
 import React, { useEffect, useState } from "react";
-import { sellerApi, superAdminApi, roleApi } from "../services/api";
+import { sellerApi, stockApi, grnApi } from "../services/api";
 import TextField from "../components/TextField";
 import Button from "../components/Button";
-import { TbUser } from "react-icons/tb";
+import { AiOutlineStock } from "react-icons/ai";
 import ComboBox from "../components/ComboBox";
+import clsx from "clsx";
 
-const SellerSave = ({ onSellerAdded, editingSeller, setEditingSeller }) => {
 
-    const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
-    const userRole = localStorage.getItem('role');
-
-     const generateSellerId = () => {
-    const randomDigits = Math.floor(10000 + Math.random() * 90000); 
-    return `SEL${randomDigits}`;
-};
-  
-    const loggedInAdminId = (userRole === 'super_admin')
-        ? String(savedUser?.super_admin_id || savedUser?.id || "")
-        : '';
-
+const StockSave = ({ onStockAdded, editingStock, setEditingStock }) => {
     const [formData, setFormData] = useState({
-        seller_id: generateSellerId(),
-        seller_name: '',
-        address: '',
-        email: '',
-        mobile_no: '',
-        status: 1,
-        super_admin_id: loggedInAdminId, 
-        role_id: ''
+        seller_id: '',
+        grn_id: '',
+        qty: '',
+        status: 1
     });
 
-    const [superAdmins, setSuperAdmins] = useState([]);
-    const [roles, setRoles] = useState([]);
+    const [sellers, setSellers] = useState([]);
+    const [grn, setGrn] = useState([]);
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
+    // ✅ Current seller auto-fill කිරීම
     useEffect(() => {
-        if (!editingSeller && loggedInAdminId) {
-            setFormData(prev => ({
-                ...prev,
-                super_admin_id: loggedInAdminId
-            }));
-        }
-    }, [loggedInAdminId, editingSeller]);
+        const fetchCurrentSeller = async () => {
+            try {
+                const userStr = localStorage.getItem('user');
+                let userId = null;
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    userId = user.user_id || user.id;
+                } else {
+                    userId = localStorage.getItem('user_id');
+                }
+                if (userId && !editingStock) {
+                    const res = await sellerApi.getSellerByUserId(userId);
+                    const seller = res.data?.data;
+                    if (seller) {
+                        setFormData(prev => ({ ...prev, seller_id: seller.seller_id }));
+                    }
+                }
+            } catch (e) {
+                console.error('Error fetching current seller:', e);
+            }
+        };
+        fetchCurrentSeller();
+    }, [editingStock]);
 
     useEffect(() => {
-        const fetchAdmins = async () => {
+        const fetchSellerAndGrn = async () => {
             try {
-                const res = await superAdminApi.getAllSuperAdmin();
+                // ✅ Sellers load කරන්න
+                const res = await sellerApi.getAllSeller();
                 const data = res.data && res.data.data ? res.data.data : [];
                 const options = data.map((item) => ({
-                    value: String(item.super_admin_id),
-                    label: item.super_admin_name,
+                    value: item.seller_id,
+                    label: item.business_name || item.owner_name || `Seller ${item.seller_id}`,
                 }));
-                setSuperAdmins(options);
+                
+                // ✅ GRN load කරන්න
+                const resGrn = await grnApi.getAllGrn();
+                const dataGrn = resGrn.data && resGrn.data.data ? resGrn.data.data : [];
+                const optionsGrn = dataGrn.map((item) => ({
+                    value: item.id,
+                    label: `GRN-${item.id}`,
+                }));
+                
+                setSellers(options);
+                setGrn(optionsGrn);
             } catch (error) {
-                console.error("Error fetching super admins:", error);
+                console.log("Error fetching data:", error);
             }
         };
-
-        const fetchRoles = async () => {
-            try {
-                const res = await roleApi.getAllRole();
-                const data = res.data && res.data.data ? res.data.data : res.data || [];
-                const options = data.map((item) => ({
-                    value: String(item.role_id),
-                    label: item.role,
-                }));
-                setRoles(options);
-            } catch (error) {
-                console.error("Error fetching roles:", error);
-            }
-        };
-
-        fetchAdmins();
-        fetchRoles();
+        fetchSellerAndGrn();
     }, []);
 
     const validation = () => {
         let newErrors = {};
-        if (!editingSeller && (!formData.seller_id || formData.seller_id.trim() === "")) {
-            newErrors.seller_id = "Seller ID is required";
-        }
-        if (!formData.seller_name || formData.seller_name.trim().length < 3) {
-            newErrors.seller_name = "Seller name must be at least 3 characters";
-        }
-        if (!formData.address || formData.address.trim() === "") {
-            newErrors.address = "Address is required";
-        }
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!formData.email || !emailRegex.test(formData.email)) {
-            newErrors.email = "Please enter a valid email address";
-        }
-        if (!formData.mobile_no || formData.mobile_no.length < 10) {
-            newErrors.mobile_no = "Mobile number must be at least 10 digits";
-        }
-        if (!formData.super_admin_id) {
-            newErrors.super_admin_id = "Please select a super admin";
-        }
-        if (!formData.role_id) {
-            newErrors.role_id = "Please select a role";
-        }
+        if (!formData.seller_id) newErrors.seller_id = "please select the seller";
+        if (!formData.grn_id) newErrors.grn_id = "please select the grn";
+        if (!formData.qty || formData.qty <= 0) newErrors.qty = "Quantity must be greater than 0";
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
     useEffect(() => {
-        if (editingSeller) {
-            const sanitizedData = {};
-            Object.keys(editingSeller).forEach(key => {
-                if (key === 'super_admin_id' || key === 'role_id') {
-                    sanitizedData[key] = editingSeller[key] ? String(editingSeller[key]) : "";
-                } else {
-                    sanitizedData[key] = editingSeller[key] === null ? "" : editingSeller[key];
-                }
+        if (editingStock) {
+            setFormData({
+                seller_id: editingStock.seller_id || '',
+                grn_id: editingStock.grn_id || '',
+                qty: editingStock.qty || '',
+                status: editingStock.status || 1
             });
-            setFormData(sanitizedData);
         }
-    }, [editingSeller]);
+    }, [editingStock]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: null }));
-        }
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
     };
 
     const handleSubmit = async (e) => {
@@ -132,127 +105,91 @@ const SellerSave = ({ onSellerAdded, editingSeller, setEditingSeller }) => {
         if (!validation()) return;
         setLoading(true);
         try {
-            if (editingSeller) {
-                await sellerApi.updateSeller(formData, editingSeller.seller_id);
-                alert('Seller updated successfully!');
+            if (editingStock) {
+                await stockApi.updateStock(formData, editingStock.id);
+                alert('Stock updated successfully!');
             } else {
-                await sellerApi.createSeller(formData);
-                alert('Seller saved successfully!');
+                await stockApi.createStock(formData);
+                alert('Stock registered successfully!');
             }
             handleReset();
-            onSellerAdded();
+            onStockAdded();
         } catch (error) {
-            const serverMsg = error.response?.data?.msg || "Internal server error";
-            alert(serverMsg);
+            console.error("Error details:", error);
+            const errorMsg = error.response?.data?.sqlMessage || error.response?.data?.msg || 'Internal server error !!';
+            alert(errorMsg);
         } finally {
             setLoading(false);
         }
     };
 
-   
-
     const handleReset = () => {
         setFormData({
-            seller_id: generateSellerId(),
-            seller_name: '',
-            address: '',
-            email: '',
-            mobile_no: '',
-            status: 1,
-            super_admin_id: loggedInAdminId, 
-            role_id: ''
+            seller_id: '',
+            grn_id: '',
+            qty: '',
+            status: 1
         });
-        setEditingSeller(null);
+        setEditingStock(null);
         setErrors({});
     };
 
     return (
-        <div className="relative z-10 w-full max-w-5xl bg-white backdrop-blur-2xl shadow-2xl rounded-[40px] p-12 border border-white mx-auto">
-            <div className="flex items-center gap-4 mb-12">
-                <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200">
-                    <TbUser className="text-white" />
+        <div className={clsx('relative', 'z-10', 'w-full', 'max-w-5xl', 'bg-white', 'backdrop-blur-2xl', 'shadow-2xl', 'rounded-[40px]', 'p-12', 'border', 'border-white', 'mx-auto')}>
+            <div className={clsx('flex', 'items-center', 'gap-4', 'mb-12')}>
+                <div className={clsx('w-12', 'h-12', 'bg-emerald-500', 'rounded-2xl', 'flex', 'items-center', 'justify-center', 'shadow-lg', 'shadow-emerald-200')}>
+                    <AiOutlineStock className="text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-emerald-600">
-                    {editingSeller ? 'Update Seller Or supplier Details' : 'Save New Seller Or Supplier'}
+                <h2 className={clsx('text-2xl', 'font-bold', 'text-emerald-600')}>
+                    {editingStock ? 'Update Stock Details' : 'Save New Stock'}
                 </h2>
             </div>
 
             <form onSubmit={handleSubmit}>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-x-12 gap-y-8 mb-12">
-                    <TextField
-                        label="Seller ID"
+                <div className={clsx('grid', 'grid-cols-1', 'md:grid-cols-3', 'gap-x-12', 'gap-y-8', 'mb-12')}>
+                    <ComboBox
+                        label="Assign Seller"
                         name="seller_id"
                         value={formData.seller_id}
                         onChange={handleChange}
-                        disabled={true} 
+                        options={sellers}
+                        placeholder="Select Seller"
                         error={errors.seller_id}
-                        placeholder="Generating..."
-                    />
-
-
-                    <TextField
-                        label="Seller Name"
-                        name="seller_name"
-                        value={formData.seller_name}
-                        onChange={handleChange}
-                        error={errors.seller_name}
-                        placeholder="Enter full name"
-                    />
-
-                    <TextField
-                        label="Address"
-                        name="address"
-                        value={formData.address}
-                        onChange={handleChange}
-                        error={errors.address}
-                        placeholder="Enter business address"
-                    />
-
-                    <TextField
-                        label="Email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        error={errors.email}
-                        placeholder="example@mail.com"
-                    />
-
-                    <TextField
-                        label="Mobile No"
-                        name="mobile_no"
-                        value={formData.mobile_no}
-                        onChange={handleChange}
-                        error={errors.mobile_no}
-                        placeholder="07xxxxxxxx"
+                        disabled={editingStock !== null}
                     />
                     <ComboBox
-                        label="Assign Super Admin"
-                        name="super_admin_id"
-                        value={formData.super_admin_id}
+                        label="Assign GRN"
+                        name="grn_id"
+                        value={formData.grn_id}
                         onChange={handleChange}
-                        options={superAdmins}
-                        placeholder="Select Admin"
-                        error={errors.super_admin_id}
-                        disabled={userRole === 'super_admin' && !editingSeller}
+                        options={grn}
+                        placeholder="Select GRN"
+                        error={errors.grn_id}
+                        disabled={editingStock !== null}
                     />
-
-                    <ComboBox
-                        label="Role"
-                        name="role_id"
-                        value={formData.role_id}
+                    <TextField
+                        label="Quantity"
+                        name="qty"
+                        type="number"
+                        value={formData.qty}
                         onChange={handleChange}
-                        options={roles}
-                        placeholder="Select Role"
-                        error={errors.role_id}
+                        placeholder="Enter Quantity"
+                        error={errors.qty}
                     />
                 </div>
 
-                <div className="flex justify-end gap-4 mt-4">
-                    <Button title="Cancel" variant="outline" icon="✕" onClick={handleReset} type="button" />
+                <div className={clsx('flex', 'justify-end', 'gap-4', 'mt-4')}>
                     <Button
-                        title={loading ? "Processing..." : (editingSeller ? "Update Seller" : "Save Seller")}
-                        variant={editingSeller ? "warning" : "primary"}
-                        icon={editingSeller ? "✏️" : "💾"}
+                        title="Cancel"
+                        variant="outline"
+                        icon="✕"
+                        onClick={handleReset}
+                        type="button"
+                    />
+                    <Button
+                        title={loading ? "Processing..." : (editingStock ? "Update Stock" : "Save Stock")}
+                        variant={editingStock ? "warning" : "primary"}
+                        icon={editingStock ? "✏️" : "💾"}
                         type="submit"
                         disabled={loading}
                     />
@@ -262,4 +199,4 @@ const SellerSave = ({ onSellerAdded, editingSeller, setEditingSeller }) => {
     );
 };
 
-export default SellerSave;
+export default StockSave;

@@ -6,7 +6,7 @@ import { IoFlashOutline, IoTimerOutline } from 'react-icons/io5';
 import { MdLocalShipping, MdVerified, MdSecurity } from 'react-icons/md';
 import { RiMoneyDollarCircleLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import AfterNavbar from '../layout/AfterNavbar';
+import AfterNavbar from '../layout/SellerNavbar';
 import { CartApi } from '../services/api';
 import { toast } from 'react-toastify';
 import Navbar from '../layout/Navbar';

@@ -29,7 +29,7 @@ const ShippingAddressPage = () => {
         city: '',
         district: '',
         postal_code: '',
-        country: 'Sri Lanka', // Default country
+        country: 'Sri Lanka',
         phone_number: '',
         is_default: false
     });
@@ -80,7 +80,6 @@ const fetchAddresses = async () => {
 
         console.log("📦 Fetching addresses for user:", fetchedUser.user_id);
         
-        // Interceptor එක 404 error එක handle කරලා හිස් array එකක් return කරනවා
         const res = await shippingAddressApi.getShippingAddressesByUserId(fetchedUser.user_id);
         
         console.log("📦 Address response:", res);

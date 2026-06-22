@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import DataTabale from "../components/DataTable";
 import { CiEdit, CiSearch, CiTrash } from "react-icons/ci";
-import Navbar from "../layout/Navbar";
 import { GrNodes } from "react-icons/gr";
 import { grnApi } from "../services/api";
 import GRNSave from "../pages/GrnSave";
+import SellerNavbar from "../layout/SellerNavbar";
 
 
 const GrnForm = () => {
@@ -123,7 +123,7 @@ const GrnForm = () => {
 
         return (
                <>
-       <Navbar />
+       <SellerNavbar />
         <div className="relative min-h-screen bg-white overflow-x-hidden p-6 mt-5">
           
             <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-100 rounded-full blur-[120px] opacity-60 pointer-events-none"></div>

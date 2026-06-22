@@ -23,7 +23,7 @@ const UserDashboard = () => {
     const [cartLoading, setCartLoading] = useState(false);
     const isAddingRef = useRef(false);
     const cartRef = useRef(null);
-    const lastToastId = useRef(null); 
+    const lastToastId = useRef(null);
 
     const location = useLocation();
     const navigate = useNavigate();
@@ -49,53 +49,53 @@ const UserDashboard = () => {
         }
     }, [cartItems]);
 
-  const fetchProductImages = useCallback(async (searchTermParam, categoryParam) => {
-    setLoadingProductImages(true);
-    try {
-        let response;
-        if (searchTermParam) {
-            response = await productImageApi.getProductImageByText(searchTermParam);
-        } else if (categoryParam && categoryParam !== "All Categories") {
-            response = await productImageApi.getProductImageByCategory(categoryParam);
-        } else {
-            response = await productImageApi.getAllProductImage();
-        }
+    const fetchProductImages = useCallback(async (searchTermParam, categoryParam) => {
+        setLoadingProductImages(true);
+        try {
+            let response;
+            if (searchTermParam) {
+                response = await productImageApi.getProductImageByText(searchTermParam);
+            } else if (categoryParam && categoryParam !== "All Categories") {
+                response = await productImageApi.getProductImageByCategory(categoryParam);
+            } else {
+                response = await productImageApi.getAllProductImage();
+            }
 
-        console.log("🟢 Full response:", response);
-        console.log("🟢 response.data:", response.data);
-        
-        let receivedData = [];
-        
-        if (Array.isArray(response.data)) {
-            receivedData = response.data;
-            console.log("✅ Case 1: response.data is array, length:", receivedData.length);
+            console.log("🟢 Full response:", response);
+            console.log("🟢 response.data:", response.data);
+
+            let receivedData = [];
+
+            if (Array.isArray(response.data)) {
+                receivedData = response.data;
+                console.log("✅ Case 1: response.data is array, length:", receivedData.length);
+            }
+            else if (response.data && Array.isArray(response.data.data)) {
+                receivedData = response.data.data;
+                console.log("✅ Case 2: response.data.data is array, length:", receivedData.length);
+            }
+            else if (Array.isArray(response)) {
+                receivedData = response;
+                console.log("✅ Case 3: response is array, length:", receivedData.length);
+            }
+            else {
+                console.warn("⚠️ Unknown response structure:", response);
+                receivedData = [];
+            }
+
+            console.log("📦 Final receivedData length:", receivedData.length);
+            console.log("📦 First product sample:", receivedData[0]);
+
+            setProductImages(receivedData);
+
+        } catch (error) {
+            console.error("Fetch Product Images Error:", error);
+            setProductImages([]);
+            toast.error('Failed to load products');
+        } finally {
+            setLoadingProductImages(false);
         }
-        else if (response.data && Array.isArray(response.data.data)) {
-            receivedData = response.data.data;
-            console.log("✅ Case 2: response.data.data is array, length:", receivedData.length);
-        }
-        else if (Array.isArray(response)) {
-            receivedData = response;
-            console.log("✅ Case 3: response is array, length:", receivedData.length);
-        }
-        else {
-            console.warn("⚠️ Unknown response structure:", response);
-            receivedData = [];
-        }
-        
-        console.log("📦 Final receivedData length:", receivedData.length);
-        console.log("📦 First product sample:", receivedData[0]);
-        
-        setProductImages(receivedData);
-        
-    } catch (error) {
-        console.error("Fetch Product Images Error:", error);
-        setProductImages([]);
-        toast.error('Failed to load products');
-    } finally {
-        setLoadingProductImages(false);
-    }
-}, []);
+    }, []);
 
     const fetchCartItems = async () => {
         setCartLoading(true);
@@ -134,7 +134,7 @@ const UserDashboard = () => {
         if (isAddingRef.current) {
             return;
         }
-        isAddingRef.current = true; 
+        isAddingRef.current = true;
 
         const token = localStorage.getItem('token');
         setAddingToCart(prev => ({ ...prev, [product.image_id]: true }));
@@ -156,7 +156,7 @@ const UserDashboard = () => {
             const totalAmount = finalPrice * quantity;
 
             if (token) {
-                const response = await CartApi.addToCart(productId, quantity , totalAmount);
+                const response = await CartApi.addToCart(productId, quantity, totalAmount);
                 if (response.data.success) {
                     toast.success(response.data.message || 'Added to cart!');
                     await fetchCartItems();
@@ -190,7 +190,7 @@ const UserDashboard = () => {
                     }
                     return updatedCart;
                 });
-                
+
                 if (lastToastId.current) {
                     toast.dismiss(lastToastId.current);
                 }
@@ -200,25 +200,25 @@ const UserDashboard = () => {
 
         } catch (error) {
             console.log('=== FULL ERROR DETAILS ===');
-    console.log('Error object:', error);
-    console.log('Error response:', error.response);
-    console.log('Error response data:', error.response?.data);
-    console.log('Error status:', error.response?.status);
-    console.log('Error headers:', error.response?.headers);
-    console.log('Request config:', error.config);
-    console.log('Request data:', error.config?.data);
-    console.log('=========================');
-    
-    if (error.response?.status === 401) {
-        toast.error('Please login to add items to cart');
-    } else if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
-    } else {
-        toast.error(error.message || 'Failed to add to cart');
-    }
-            
-            
-            
+            console.log('Error object:', error);
+            console.log('Error response:', error.response);
+            console.log('Error response data:', error.response?.data);
+            console.log('Error status:', error.response?.status);
+            console.log('Error headers:', error.response?.headers);
+            console.log('Request config:', error.config);
+            console.log('Request data:', error.config?.data);
+            console.log('=========================');
+
+            if (error.response?.status === 401) {
+                toast.error('Please login to add items to cart');
+            } else if (error.response?.data?.message) {
+                toast.error(error.response.data.message);
+            } else {
+                toast.error(error.message || 'Failed to add to cart');
+            }
+
+
+
         } finally {
             setTimeout(() => {
                 isAddingRef.current = false;
@@ -272,22 +272,22 @@ const UserDashboard = () => {
         return cartItems.reduce((sum, item) => sum + parseFloat(item.total_amount), 0).toFixed(2);
     };
 
-  const handleCheckoutClick = () => {
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
-        toast.warning("please loging ");
-        navigate('/login');
-        return;
-    }
-    
-    // if (cartItems.length === 0) {
-    //     toast.warning("ඔබේ කාර්ට් එක හිස්ය. කරුණාකර අයිතම් එකතු කරන්න.");
-    //     return;
-    // }
-    
-   window.location.href = '/checkout';
-};
+    const handleCheckoutClick = () => {
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            toast.warning("please loging ");
+            navigate('/login');
+            return;
+        }
+
+        // if (cartItems.length === 0) {
+        //     toast.warning("ඔබේ කාර්ට් එක හිස්ය. කරුණාකර අයිතම් එකතු කරන්න.");
+        //     return;
+        // }
+
+        window.location.href = '/checkout';
+    };
 
     return (
         <>

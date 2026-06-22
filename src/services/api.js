@@ -110,6 +110,16 @@ export const sellerApi = {
     getSellerByText: (text) => httpRequest.get(`/seller/text/${text}`),
     updateSeller: (seller, sellerId) => httpRequest.put(`/seller/update/${sellerId}`, seller),
     deleteSeller: (sellerId) => httpRequest.delete(`/seller/delete/${sellerId}`),
+
+    getAllSellersWithStatus: () => httpRequest.get("/seller/all-with-status"),
+    
+        updateSellerStatus: (sellerId, status) => {
+        console.log('📤 Updating status:', { sellerId, status });
+        // Backend එකේ /api/v1/seller/status/:sellerId Route එකට PUT request එක
+        return httpRequest.put(`/seller/status/${sellerId}`, { status });
+    },
+    getSellerByUserId: (userId) => httpRequest.get(`/seller/user/${userId}`),
+
 }
 
 export const supplierApi = {

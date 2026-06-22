@@ -1,14 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { BiLogOut, BiUserPlus } from "react-icons/bi";
-import { FaUser } from "react-icons/fa";
-import { HiUserGroup } from "react-icons/hi";
-import { FiPackage } from "react-icons/fi";
+import { BiLogOut } from "react-icons/bi";
+import { FaBoxes, FaClipboardList, FaBoxOpen } from "react-icons/fa";
 import { SiHomebridge } from "react-icons/si";
-import { GiReturnArrow } from "react-icons/gi";
-import { FaUsersLine } from "react-icons/fa6";
+import { GrNodes } from "react-icons/gr";
 
-export const SuperAdminNavbar = ({ onLogout, profile }) => {
+export const SellerNavbar = ({ onLogout, profile }) => {
     const navigate = useNavigate();
 
     const navBtnStyle = `
@@ -42,56 +39,30 @@ export const SuperAdminNavbar = ({ onLogout, profile }) => {
 
                     <div className="flex items-center gap-2 md:gap-4">
                         <div className="hidden lg:flex items-center gap-1 bg-gray-50/50 p-1.5 rounded-2xl border border-gray-100">
-                            <button onClick={() => navigate('/sellerForm')} className={navBtnStyle}>
-                                <div className={iconBoxStyle}><FaUser className="text-[#4a634d]" /></div>
-                                <span>Sellers Or Supplier</span>
+                            <button onClick={() => navigate('/grnForm')} className={navBtnStyle}>
+                                <div className={iconBoxStyle}><GrNodes className="text-[#4a634d]" /></div>
+                                <span>GRN Management</span>
                             </button>
 
-                            <button onClick={() => navigate('/roleForm')} className={navBtnStyle}>
-                                <div className={iconBoxStyle}><HiUserGroup className="text-[#4a634d]" /></div>
-                                <span>Roles</span>
+                            <button onClick={() => navigate('/stockForm')} className={navBtnStyle}>
+                                <div className={iconBoxStyle}><FaBoxes className="text-[#4a634d]" /></div>
+                                <span>Stock Management</span>
                             </button>
 
-                              <button onClick={() => navigate('/superAdminForm')} className={navBtnStyle}>
-                                <div className={iconBoxStyle}><BiUserPlus className="text-[#4a634d]" /></div>
-                                <span>Super admin  </span>
-                            </button>
-                             <button onClick={() => navigate('/user')} className={navBtnStyle}>
-                                <div className={iconBoxStyle}><FaUser className="text-[#4a634d]" /></div>
-                                <span>Users  </span>
+                            <button onClick={() => navigate('/productManagement')} className={navBtnStyle}>
+                                <div className={iconBoxStyle}><FaBoxOpen className="text-[#4a634d]" /></div>
+                                <span>Product Management</span>
                             </button>
 
-                           <button onClick={() => navigate('/sellerApproved')} className={navBtnStyle}>
-                                <div className={iconBoxStyle}><FaUsersLine className="text-[#4a634d]" /></div>
-                                <span>Seller Manage </span>
-                            </button>
-
-                            <button onClick={() => navigate('/adminorders')} className={navBtnStyle}>
-                                <div className={iconBoxStyle}><FiPackage className="text-[#4a634d]" /></div>
-                                <span>Orders </span>
-                            </button>
-
-                                  <button onClick={() => navigate('/admin/returns')} className={navBtnStyle}>
-                                <div className={iconBoxStyle}><GiReturnArrow className="text-[#4a634d]" /></div>
-                                <span>Return  Orders </span>
-                            </button>
-
-                              <button onClick={() => navigate('/super-admin/dashboard')} className={navBtnStyle}>
+                            <button onClick={() => navigate('/sellerDashboard')} className={navBtnStyle}>
                                 <div className={iconBoxStyle}><SiHomebridge className="text-[#4a634d]" /></div>
-                                <span>Dashboard </span>
+                                <span>Dashboard</span>
                             </button>
-
-
-
-                           
-
-
                         </div>
 
                         <div className="h-8 w-[1px] bg-gray-200 mx-2 hidden md:block"></div>
 
                         <div className="flex items-center gap-3">
-                       
                             <button
                                 onClick={onLogout}
                                 className="group flex items-center gap-2 px-5 py-2.5 bg-[#f32f2f] text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-100 transition-all hover:bg-[#dd0c0c] active:scale-95"
@@ -107,4 +78,4 @@ export const SuperAdminNavbar = ({ onLogout, profile }) => {
     );
 }
 
-export default SuperAdminNavbar;
+export default SellerNavbar;
