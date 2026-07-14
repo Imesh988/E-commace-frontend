@@ -8,6 +8,7 @@ import { TbTruckReturn, TbLayoutDashboard, TbUsers } from "react-icons/tb";
 import { toast } from "react-toastify";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import SellerNavbar from "../layout/SellerNavbar";
+import useSellerAuth from '../hooks/useSellerAuth';
 
 const SellerDashboard = () => {
     const [products, setProducts] = useState([]);
@@ -18,6 +19,9 @@ const SellerDashboard = () => {
     const [editingProduct, setEditingProduct] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [activeTab, setActiveTab] = useState("products");
+
+
+    useSellerAuth();
 
     const getCurrentUserId = () => {
         const userStr = localStorage.getItem('user');

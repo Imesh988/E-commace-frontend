@@ -3,27 +3,37 @@ import { Link } from 'react-router-dom';
 import { orderApi } from "../services/api";
 import { toast } from "react-toastify";
 import Navbar from "../layout/Navbar";
-
+import { 
+    FiPackage, FiClock, FiCheckCircle, FiXCircle, 
+    FiRefreshCw, FiDollarSign, FiCalendar, FiArrowRight,
+    FiSearch, FiShoppingBag, FiHash, FiInfo
+} from 'react-icons/fi';
+import { IoReturnUpBackOutline } from 'react-icons/io5';
 
 const ReturnStatusBadge = ({ status }) => {
     if (status === null || status === undefined) return null;
     const config = {
-        0: { label: 'Return Pending', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-        1: { label: 'Return Approved', color: 'bg-green-100 text-green-700 border-green-200' },
-        2: { label: 'Return Rejected', color: 'bg-red-100 text-red-700 border-red-200' },
-        3: { label: 'Refunded', color: 'bg-blue-100 text-blue-700 border-blue-200' }
+        0: { label: 'Pending', bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100', dot: 'bg-amber-400' },
+        1: { label: 'Approved', bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100', dot: 'bg-emerald-400' },
+        2: { label: 'Rejected', bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-100', dot: 'bg-rose-400' },
+        3: { label: 'Refunded', bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-100', dot: 'bg-blue-400' }
     };
-    const { label, color } = config[status] || config[0];
+    const { label, bg, text, border, dot } = config[status] || config[0];
     return (
-        <span className={`px-2.5 py-1 rounded-lg text-[10px] uppercase tracking-wider font-bold border ${color}`}>
+        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${bg} ${text} ${border}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${dot} animate-pulse`}></span>
             {label}
         </span>
     );
 };
 
 const LoadingSpinner = () => (
-    <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-slate-600"></div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#fcfdf2]">
+        <div className="relative w-16 h-16">
+            <div className="absolute inset-0 border-4 border-emerald-100 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-emerald-600 rounded-full border-t-transparent animate-spin"></div>
+        </div>
+        <p className="mt-4 text-emerald-900 font-black uppercase tracking-[0.3em] text-[10px]">Processing Records</p>
     </div>
 );
 
@@ -41,35 +51,22 @@ const ReturnedOrders = () => {
             setLoading(true);
             const response = await orderApi.getAllOrders();
             const ordersArray = response.data?.data || response.data?.orders || [];
-            // console.log('orders ', ordersArray);
             
             const userStr = localStorage.getItem('user');
-            // console.log('user' , userStr);
-            
             let currentUserId = null;
             if (userStr) {
                 try {
                     const userObj = JSON.parse(userStr);
                     currentUserId = userObj.user_id;
-                    console.log('current user id' , currentUserId);
-
-                    console.log('current user' , userObj);
-                    
                 } catch(e) { console.error(e); }
             }
             if (!currentUserId) {
                 currentUserId = localStorage.getItem('user_id');
             }
             const userOrders = ordersArray.filter(order => order.user_id == currentUserId);
-            console.log('current ordrs ', userOrders);
-            
             const returned = userOrders.filter(order => order.return_status !== null && order.return_status !== undefined);
             setReturnedOrders(returned);
-
-            console.log('return orders' , returned);
-            
         } catch (error) {
-            console.error('Failed to fetch returned orders:', error);
             toast.error('Failed to fetch returned orders');
             setReturnedOrders([]);
         } finally {
@@ -82,14 +79,9 @@ const ReturnedOrders = () => {
         return returnedOrders.filter(order => order.return_status == activeFilter);
     };
 
-    const getReturnStatusLabel = (status) => {
-        switch(status) {
-            case 0: return 'Return Pending';
-            case 1: return 'Return Approved';
-            case 2: return 'Return Rejected';
-            case 3: return 'Refunded';
-            default: return 'Return Requested';
-        }
+    const getStatusCount = (status) => {
+        if (status === 'all') return returnedOrders.length;
+        return returnedOrders.filter(o => o.return_status == status).length;
     };
 
     const filteredOrders = getFilteredOrders();
@@ -97,138 +89,133 @@ const ReturnedOrders = () => {
     if (loading) return <LoadingSpinner />;
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] pb-20">
+        <div className="min-h-screen ">
+            {/* Aesthetic Background */}
+             <div className="fixed inset-0 z-0 pointer-events-none">
+                <div className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-emerald-200/30 rounded-full blur-[120px]"></div>
+                <div className="absolute bottom-[5%] right-[-5%] w-[600px] h-[600px] bg-yellow-200/20 rounded-full blur-[130px]"></div>
+                <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-emerald-100/40 rounded-full blur-[100px]"></div>
+                <div className="absolute bottom-[-10%] left-[10%] w-[500px] h-[500px] bg-yellow-100/30 rounded-full blur-[110px]"></div>
+            </div>
+
             <Navbar />
 
-             <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-0 left-0 w-80 h-80 bg-emerald-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>
-                <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000 z-0"></div>
-                <div className="absolute bottom-0 right-0 w-72 h-72 bg-emerald-100 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000 z-0"></div>
-                <div className="absolute bottom-1/4 right-1/2 w-64 h-64 bg-yellow-100 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>
-            </div>
-            <div className="max-w-[2440px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-28">
-                <div className="mb-8">
-                    {/* <h1 className="text-3xl font-bold text-slate-900">My Return Requests</h1>
-                    <p className="text-slate-500 mt-2">Track and manage your return requests</p> */}
+            <div className="relative z-10 w-full px-4 sm:px-8 lg:px-12 xl:px-20 pt-10 pb-20">
+                
+                {/* Header Section */}
+                <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-12 gap-8">
+                    <div className="space-y-3">
+                        
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                        <div className="hidden sm:flex bg-white/70 backdrop-blur-md px-6 py-3 rounded-2xl border border-white shadow-xl shadow-emerald-900/5 items-center gap-4">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Claims</span>
+                                <span className="text-xl font-black text-emerald-600">{returnedOrders.length}</span>
+                            </div>
+                            <div className="h-8 w-px bg-slate-100"></div>
+                            <Link to="/orders" className="p-2 bg-slate-900 text-white rounded-xl hover:bg-emerald-600 transition-all">
+                                <FiShoppingBag size={18} />
+                            </Link>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 mb-8">
-                    <button
-                        onClick={() => setActiveFilter('all')}
-                        className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
-                            activeFilter === 'all' 
-                            ? 'bg-emerald-600 text-white shadow-md' 
-                            : 'bg-white text-slate-600 hover:bg-slate-100'
-                        }`}
-                    >
-                        All ({returnedOrders.length})
-                    </button>
-                    <button
-                        onClick={() => setActiveFilter('0')}
-                        className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
-                            activeFilter === '0' 
-                            ? 'bg-yellow-600 text-white shadow-md' 
-                            : 'bg-white text-slate-600 hover:bg-slate-100'
-                        }`}
-                    >
-                        Pending ({returnedOrders.filter(o => o.return_status === 0).length})
-                    </button>
-                    <button
-                        onClick={() => setActiveFilter('1')}
-                        className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
-                            activeFilter === '1' 
-                            ? 'bg-green-600 text-white shadow-md' 
-                            : 'bg-white text-slate-600 hover:bg-slate-100'
-                        }`}
-                    >
-                        Approved ({returnedOrders.filter(o => o.return_status === 1).length})
-                    </button>
-                    <button
-                        onClick={() => setActiveFilter('2')}
-                        className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
-                            activeFilter === '2' 
-                            ? 'bg-red-600 text-white shadow-md' 
-                            : 'bg-white text-slate-600 hover:bg-slate-100'
-                        }`}
-                    >
-                        Rejected ({returnedOrders.filter(o => o.return_status === 2).length})
-                    </button>
-                    <button
-                        onClick={() => setActiveFilter('3')}
-                        className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
-                            activeFilter === '3' 
-                            ? 'bg-blue-600 text-white shadow-md' 
-                            : 'bg-white text-slate-600 hover:bg-slate-100'
-                        }`}
-                    >
-                        Refunded ({returnedOrders.filter(o => o.return_status === 3).length})
-                    </button>
+                {/* Navigation / Filters */}
+                <div className="flex flex-wrap gap-2 mb-10 bg-white/40 backdrop-blur-md p-2 rounded-[22px] border border-white/60 w-fit">
+                    {[
+                        { key: 'all', label: 'All Requests' },
+                        { key: '0', label: 'Pending' },
+                        { key: '1', label: 'Approved' },
+                        { key: '2', label: 'Rejected' },
+                        { key: '3', label: 'Refunded' }
+                    ].map((filter) => (
+                        <button
+                            key={filter.key}
+                            onClick={() => setActiveFilter(filter.key)}
+                            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                                activeFilter === filter.key 
+                                ? 'bg-slate-900 text-white shadow-lg shadow-slate-200' 
+                                : 'text-slate-400 hover:text-slate-600 hover:bg-white/60'
+                            }`}
+                        >
+                            {filter.label} <span className="ml-1 opacity-50">({getStatusCount(filter.key)})</span>
+                        </button>
+                    ))}
                 </div>
 
                 {filteredOrders.length === 0 ? (
-                    <div className="bg-white rounded-3xl p-20 text-center border border-dashed border-slate-300">
-                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                            </svg>
+                    <div className="w-full flex flex-col items-center justify-center py-32 bg-white/40 backdrop-blur-xl rounded-[60px] border border-white shadow-2xl">
+                        <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mb-8">
+                            <IoReturnUpBackOutline className="text-5xl text-emerald-200" />
                         </div>
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">No return requests found</h3>
-                        <p className="text-slate-500 mb-8">You haven't submitted any return requests yet</p>
-                        <Link to="/orders" className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-emerald-600 transition-colors">
-                            View My Orders
+                        <h2 className="text-2xl font-black text-slate-800 mb-2">No returns found here</h2>
+                        <p className="text-slate-500 mb-8 font-medium">Your claim history is currently empty.</p>
+                        <Link to="/orders" className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all shadow-xl shadow-emerald-200/20 active:scale-95">
+                            Browse My Orders
                         </Link>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
                         {filteredOrders.map((order) => (
-                            <div key={order.order_id} className="bg-white rounded-2xl border border-slate-200 shadow-lg hover:shadow-xl transition-all overflow-hidden">
-                                <div className="p-5 border-b border-slate-100">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Order ID</p>
-                                            <p className="font-mono font-bold text-slate-800 text-sm">#{order.order_id.slice(-8).toUpperCase()}</p>
-                                        </div>
-                                        <ReturnStatusBadge status={order.return_status} />
+                            <div
+                                key={order.order_id}
+                                className="group relative bg-white/80 backdrop-blur-md rounded-[35px] border border-white p-7 shadow-sm hover:shadow-2xl hover:shadow-emerald-900/10 transition-all duration-500 flex flex-col cursor-default hover:-translate-y-2"
+                            >
+                                {/* Card Header */}
+                                <div className="flex justify-between items-start mb-8">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest flex items-center gap-1">
+                                            <FiHash className="text-emerald-500" /> Ref: {order.order_id.slice(-8).toUpperCase()}
+                                        </p>
+                                        <p className="text-xs font-black text-slate-800">
+                                            Return ID: <span className="text-slate-400">#{order.return_id || 'PROC-001'}</span>
+                                        </p>
                                     </div>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-slate-500">Return ID:</span>
-                                        <span className="font-mono text-slate-700">{order.return_id || 'N/A'}</span>
+                                    <ReturnStatusBadge status={order.return_status} />
+                                </div>
+
+                                {/* Body Stats */}
+                                <div className="grid grid-cols-2 gap-3 mb-8">
+                                    <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100 group-hover:bg-white transition-colors">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Billed</p>
+                                        <p className="text-base font-black text-slate-800 tracking-tighter">
+                                            LKR {parseFloat(order.total_amount).toLocaleString()}
+                                        </p>
+                                    </div>
+                                    <div className="bg-emerald-50 p-4 rounded-3xl border border-emerald-100 group-hover:bg-white transition-colors">
+                                        <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1">Refundable</p>
+                                        <p className="text-base font-black text-emerald-600 tracking-tighter">
+                                            LKR {parseFloat(order.refund_amount || order.total_amount).toLocaleString()}
+                                        </p>
                                     </div>
                                 </div>
 
-                                <div className="p-5 space-y-3">
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-500 text-sm">Return Status:</span>
-                                        <span className="font-semibold text-slate-800">{getReturnStatusLabel(order.return_status)}</span>
+                                {/* Info List */}
+                                <div className="space-y-4 mb-8">
+                                    <div className="flex justify-between items-center text-[10px] font-bold">
+                                        <span className="text-slate-400 uppercase tracking-widest flex items-center gap-2"><FiCalendar className="text-emerald-500" /> Filed On</span>
+                                        <span className="text-slate-700">{new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-500 text-sm">Total Amount:</span>
-                                        <span className="font-bold text-emerald-600">LKR {parseFloat(order.total_amount).toLocaleString()}</span>
-                                    </div>
-                                    {order.refund_amount && (
-                                        <div className="flex justify-between">
-                                            <span className="text-slate-500 text-sm">Refund Amount:</span>
-                                            <span className="font-bold text-blue-600">LKR {parseFloat(order.refund_amount).toLocaleString()}</span>
-                                        </div>
-                                    )}
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-500 text-sm">Request Date:</span>
-                                        <span className="text-slate-700 text-sm">{new Date(order.created_at).toLocaleDateString()}</span>
-                                    </div>
+                                    
                                     {order.admin_reason && (
-                                        <div className="mt-3 p-3 bg-slate-50 rounded-xl">
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Admin Remark</p>
-                                            <p className="text-sm text-slate-600">{order.admin_reason}</p>
+                                        <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-100/50">
+                                            <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1 flex items-center gap-1">
+                                                <FiInfo /> Remarks
+                                            </p>
+                                            <p className="text-[11px] text-amber-700 leading-relaxed font-medium italic">"{order.admin_reason}"</p>
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="p-4 bg-slate-50/50">
+                                {/* Action */}
+                                <div className="mt-auto">
                                     <Link
                                         to={`/orders/${order.order_id}`}
-                                        className="block w-full text-center py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-emerald-600 transition-colors"
+                                        className="w-full flex items-center justify-center gap-3 py-4 bg-slate-900 text-white rounded-[20px] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600 shadow-xl shadow-slate-200 hover:shadow-emerald-200 transition-all duration-300 group/btn"
                                     >
-                                        View Order Details
+                                        View Full Audit <FiArrowRight className="text-lg group-hover/btn:translate-x-1 transition-transform" />
                                     </Link>
                                 </div>
                             </div>
@@ -236,6 +223,21 @@ const ReturnedOrders = () => {
                     </div>
                 )}
             </div>
+
+            <style jsx>{`
+                @keyframes blob {
+                    0% { transform: translate(0px, 0px) scale(1); }
+                    33% { transform: translate(30px, -50px) scale(1.1); }
+                    66% { transform: translate(-20px, 20px) scale(0.9); }
+                    100% { transform: translate(0px, 0px) scale(1); }
+                }
+                .animate-blob {
+                    animation: blob 10s infinite;
+                }
+                .animation-delay-2000 {
+                    animation-delay: 2s;
+                }
+            `}</style>
         </div>
     );
 };

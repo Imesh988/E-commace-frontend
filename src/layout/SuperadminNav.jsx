@@ -42,15 +42,15 @@ export const SuperAdminNavbar = ({ onLogout, profile }) => {
 
                     <div className="flex items-center gap-2 md:gap-4">
                         <div className="hidden lg:flex items-center gap-1 bg-gray-50/50 p-1.5 rounded-2xl border border-gray-100">
-                            <button onClick={() => navigate('/sellerForm')} className={navBtnStyle}>
+                            {/* <button onClick={() => navigate('/sellerForm')} className={navBtnStyle}>
                                 <div className={iconBoxStyle}><FaUser className="text-[#4a634d]" /></div>
                                 <span>Sellers Or Supplier</span>
-                            </button>
+                            </button> */}
 
-                            <button onClick={() => navigate('/roleForm')} className={navBtnStyle}>
+                            {/* <button onClick={() => navigate('/roleForm')} className={navBtnStyle}>
                                 <div className={iconBoxStyle}><HiUserGroup className="text-[#4a634d]" /></div>
                                 <span>Roles</span>
-                            </button>
+                            </button> */}
 
                               <button onClick={() => navigate('/superAdminForm')} className={navBtnStyle}>
                                 <div className={iconBoxStyle}><BiUserPlus className="text-[#4a634d]" /></div>

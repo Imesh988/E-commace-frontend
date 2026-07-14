@@ -1,28 +1,26 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { BiLogOut, BiLogIn, BiUser, BiSearch, BiBell, BiHeart, BiCog } from "react-icons/bi";
+import { BiLogOut, BiLogIn, BiUser, BiHeart, BiCog, BiCheck } from "react-icons/bi";
 import { FaShoppingBag, FaClipboardList, FaCashRegister, FaUserPlus } from "react-icons/fa";
 import { MdCategory, MdDashboard, MdOutlineShoppingCart } from 'react-icons/md';
 import { HiMiniHome } from "react-icons/hi2";
 import { ChevronDownIcon } from "lucide-react";
-import SearchInput from "../components/SearchInput";
 import { categoryAPI } from "../services/api";
 import { TbTruckReturn } from "react-icons/tb";
+import clsx from 'clsx';
 
 export const Navbar = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const token = localStorage.getItem('token');
-    const [searchTerm, setSearchTerm] = useState("");
     const [categories, setCategories] = useState([]);
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
     const [selectedCategoryLabel, setSelectedCategoryLabel] = useState("All Categories");
     const dropdownRef = useRef(null);
-    const isDashboard = location.pathname === '/' || location.pathname === '/user/dashboard';
+    const buttonRef = useRef(null);
 
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
-        setSearchTerm(queryParams.get('search') || '');
         setSelectedCategoryLabel(queryParams.get('category') || "All Categories");
     }, [location.search]);
 
@@ -36,8 +34,8 @@ export const Navbar = () => {
     }, []);
 
     useEffect(() => {
-        if (isDashboard) fetchCategories();
-    }, [fetchCategories, isDashboard]);
+        fetchCategories();
+    }, [fetchCategories]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -54,14 +52,6 @@ export const Navbar = () => {
         navigate('/login');
     };
 
-    const handleSearch = (e) => {
-        const value = e.target.value;
-        setSearchTerm(value);
-        const queryParams = new URLSearchParams(location.search);
-        value.trim() ? queryParams.set('search', value.trim()) : queryParams.delete('search');
-        navigate(`${location.pathname}?${queryParams.toString()}`);
-    };
-
     const handleCategorySelect = (categoryName) => {
         setSelectedCategoryLabel(categoryName);
         setShowCategoryDropdown(false);
@@ -70,85 +60,192 @@ export const Navbar = () => {
         navigate(`${location.pathname}?${queryParams.toString()}`);
     };
 
+    const navBtnStyle = `
+        group flex items-center gap-2 px-4 py-2 rounded-xl 
+        text-[#3d4a3e] font-bold text-sm transition-all duration-500 ease-out
+        hover:bg-[#fef9c3] hover:text-[#854d0e] 
+        active:scale-95
+    `;
+
+    const iconBoxStyle = `
+        p-1.5 bg-[#ecf3e9] rounded-xl group-hover:bg-white transition-all duration-300
+    `;
+
     const IconButton = ({ onClick, icon: Icon, label, variant = "ghost" }) => {
-        const styles = {
-            ghost: "text-gray-600 hover:bg-amber-50 hover:text-amber-600",
-            primary: "bg-amber-500 text-white shadow-lg shadow-amber-200 hover:bg-amber-600",
-            danger: "bg-rose-50 text-rose-600 hover:bg-rose-100",
-            outline: "border-2 border-amber-500 text-amber-600 hover:bg-amber-50"
-        };
+        let buttonClasses = navBtnStyle;
+        if (variant === "danger") {
+            buttonClasses = `
+                group flex items-center gap-2 px-5 py-2.5 bg-[#f32f2f] text-white rounded-2xl font-bold text-sm shadow-lg shadow-red-100 transition-all hover:bg-[#dd0c0c] active:scale-95
+            `;
+        } else if (variant === "primary") {
+            buttonClasses = `
+                group flex items-center gap-2 px-5 py-2.5 bg-[#2d4030] text-white rounded-2xl font-bold text-sm shadow-lg shadow-green-100 transition-all hover:bg-[#1e2e20] active:scale-95
+            `;
+        }
         return (
-            <div className="relative group flex flex-col items-center">
-                <button onClick={onClick} className={`p-2.5 rounded-2xl transition-all duration-200 active:scale-90 ${styles[variant]}`}>
-                    <Icon size={22} />
-                </button>
-                <div className="absolute -bottom-10 scale-0 transition-all duration-200 rounded-lg bg-gray-900 px-3 py-1.5 text-[11px] font-bold text-white group-hover:scale-100 z-[100] whitespace-nowrap shadow-xl border border-gray-700">
-                    {label}
-                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+            <button onClick={onClick} className={buttonClasses}>
+                <div className={iconBoxStyle}>
+                    <Icon className="text-[#4a634d]" size={18} />
                 </div>
-            </div>
+                <span>{label}</span>
+            </button>
         );
     };
 
     return (
-        <nav className="sticky top-0 z-50 px-4 py-4 bg-transparent">
-            <div className="max-w-[85%] mx-auto bg-white border border-gray-100 shadow-xl shadow-slate-200/50 rounded-[2rem] px-6">
-                <div className="flex justify-between items-center h-20">
-                    <div className="flex-shrink-0 flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
-                        <div className="w-11 h-11 bg-amber-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-200 transition-transform group-hover:rotate-12">
-                            <FaShoppingBag className="text-white text-lg" />
+        <nav className={clsx('sticky', 'top-4', 'z-50', 'px-4', 'md:px-12')}>
+            <div className={clsx('w-full', 'bg-white/80', 'backdrop-blur-2xl', 'border', 'border-[#d1dbcd]', 'shadow-xl', 'rounded-[32px]', 'px-6', 'transition-all', 'duration-500')}>
+                <div className={clsx('flex', 'flex-wrap', 'items-center', 'justify-between', 'h-20')}>
+
+                    <div 
+                        className={clsx('flex-shrink-0', 'flex', 'items-center', 'gap-3', 'group', 'cursor-pointer')}
+                        onClick={() => navigate('/')}
+                    >
+                        <div className={clsx('w-10', 'h-10', 'bg-[#2d4030]', 'rounded-xl', 'flex', 'items-center', 'justify-center', 'shadow-lg', 'transform', 'group-hover:rotate-6', 'transition-all')}>
+                            <FaShoppingBag className={clsx('text-[#fef9c3]', 'text-lg')} />
                         </div>
-                        <span className="text-2xl font-black text-gray-800 hidden xl:block tracking-tighter">ShopEase</span>
+                        <div className={clsx('flex', 'flex-col')}>
+                            <span className={clsx('text-lg', 'font-black', 'text-[#2d4030]', 'leading-none')}>ShopEase</span>
+                            <span className={clsx('text-[9px]', 'text-green-600', 'font-bold', 'uppercase', 'tracking-widest', 'mt-1')}>Status: Active</span>
+                        </div>
                     </div>
-                    <div className="flex items-center justify-end flex-1">
-                        {isDashboard && (
-                            <div className="hidden md:flex items-center gap-3 mr-4 w-full max-w-xl">
-                                <div className="relative flex-1">
-                                    <BiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
-                                    <SearchInput value={searchTerm} onchange={handleSearch} placeholder="Search for items..." className="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-amber-400 transition-all text-sm font-medium text-gray-700 outline-none" />
-                                </div>
-                                <div className="relative" ref={dropdownRef}>
-                                    <button onClick={() => setShowCategoryDropdown(!showCategoryDropdown)} className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl transition-all text-sm font-bold text-gray-600 hover:text-amber-600 hover:bg-amber-50">
-                                        <MdCategory className="text-amber-500" />
-                                        <span className="hidden lg:inline truncate max-w-[100px] font-bold">{selectedCategoryLabel}</span>
-                                        <ChevronDownIcon className={`w-4 h-4 transition-transform duration-300 ${showCategoryDropdown ? 'rotate-180' : ''}`} />
-                                    </button>
-                                    {showCategoryDropdown && (
-                                        <div className="absolute right-0 mt-3 w-64 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 p-2 animate-in fade-in zoom-in-95 duration-200">
-                                            <button onClick={() => handleCategorySelect("All Categories")} className="w-full text-left px-4 py-3 rounded-xl text-sm hover:bg-amber-50 transition-colors flex items-center gap-3 font-bold text-gray-700">
-                                                <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center"><MdDashboard className="text-amber-600" /></div>
-                                                All Categories
-                                            </button>
-                                            <div className="h-px bg-gray-100 my-2 mx-2" />
-                                            <div className="max-h-64 overflow-y-auto custom-scrollbar px-1">
-                                                {categories.map((cat) => (
-                                                    <button key={cat.category_id} onClick={() => handleCategorySelect(cat.category)} className="w-full text-left px-4 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50 hover:text-amber-600 transition-all font-medium mb-1">{cat.category}</button>
-                                                ))}
-                                            </div>
+
+                    <div className={clsx('flex', 'items-center', 'gap-2', 'md:gap-4', 'flex-wrap')}>
+                        <div className={clsx('hidden', 'lg:flex', 'items-center', 'gap-1', 'bg-gray-50/50', 'p-1.5', 'rounded-2xl', 'border', 'border-gray-100')}>
+
+                            <div className="relative" ref={dropdownRef}>
+                                <button
+                                    ref={buttonRef}
+                                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                                    className={navBtnStyle}
+                                >
+                                    <div className={iconBoxStyle}>
+                                        <MdCategory className="text-[#4a634d]" size={18} />
+                                    </div>
+                                    <span className={clsx('truncate', 'max-w-[100px]')}>{selectedCategoryLabel}</span>
+                                    <ChevronDownIcon 
+                                        className={`w-4 h-4 text-[#4a634d] transition-transform duration-300 ${showCategoryDropdown ? 'rotate-180' : ''}`} 
+                                    />
+                                </button>
+
+                                {showCategoryDropdown && (
+                                    <div 
+                                        className={clsx('absolute', 'right-0', 'mt-3', 'w-72', 'bg-white/90', 'backdrop-blur-xl', 'border', 'border-white/30', 'rounded-2xl', 'shadow-2xl', 'shadow-amber-200/40', 'z-50', 'p-2', 'animate-in', 'slide-in-from-top-5', 'fade-in', 'duration-200')}
+                                    >
+                                        <div className={clsx('px-3', 'py-2', 'mb-1', 'border-b', 'border-gray-100/50')}>
+                                            <span className={clsx('text-xs', 'font-bold', 'text-gray-400', 'uppercase', 'tracking-wider')}>Browse Categories</span>
                                         </div>
-                                    )}
-                                </div>
+
+                                        <button 
+                                            onClick={() => handleCategorySelect("All Categories")} 
+                                            className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-all flex items-center gap-3 group ${
+                                                selectedCategoryLabel === "All Categories" 
+                                                    ? "bg-[#fef9c3] text-[#854d0e] font-bold" 
+                                                    : "text-gray-600 hover:bg-[#fef9c3]/50 hover:text-[#854d0e]"
+                                            }`}
+                                        >
+                                            <div className={clsx('w-8', 'h-8', 'rounded-lg', 'bg-[#ecf3e9]', 'flex', 'items-center', 'justify-center', 'group-hover:scale-110', 'transition-transform')}>
+                                                <MdDashboard className="text-[#4a634d]" />
+                                            </div>
+                                            <span className="flex-1">All Categories</span>
+                                            {selectedCategoryLabel === "All Categories" && <BiCheck className={clsx('text-[#4a634d]', 'text-lg')} />}
+                                        </button>
+
+                                        <div className={clsx('h-px', 'bg-gray-100/50', 'my-2', 'mx-2')} />
+
+                                        <div className={clsx('max-h-64', 'overflow-y-auto', 'custom-scrollbar', 'px-1')}>
+                                            {categories.map((cat) => (
+                                                <button 
+                                                    key={cat.category_id} 
+                                                    onClick={() => handleCategorySelect(cat.category)} 
+                                                    className={`w-full text-left px-4 py-2.5 rounded-xl text-sm transition-all flex items-center gap-3 group ${
+                                                        selectedCategoryLabel === cat.category 
+                                                            ? "bg-[#fef9c3] text-[#854d0e] font-bold" 
+                                                            : "text-gray-600 hover:bg-[#fef9c3]/50 hover:text-[#854d0e]"
+                                                    }`}
+                                                >
+                                                    <span className={clsx('w-6', 'h-6', 'rounded-full', 'bg-[#ecf3e9]', 'flex', 'items-center', 'justify-center', 'text-xs', 'font-bold', 'text-[#4a634d]', 'group-hover:scale-110', 'transition-transform')}>
+                                                        {cat.category.charAt(0).toUpperCase()}
+                                                    </span>
+                                                    <span className="flex-1">{cat.category}</span>
+                                                    {selectedCategoryLabel === cat.category && <BiCheck className={clsx('text-[#4a634d]', 'text-lg')} />}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                        <div className="flex items-center gap-1">
+
+                            <button onClick={() => navigate('/')} className={navBtnStyle}>
+                                <div className={iconBoxStyle}><HiMiniHome className="text-[#4a634d]" size={18} /></div>
+                                <span>Home</span>
+                            </button>
+
+                            <button onClick={() => navigate('/orders')} className={navBtnStyle}>
+                                <div className={iconBoxStyle}><FaClipboardList className="text-[#4a634d]" size={18} /></div>
+                                <span>Orders</span>
+                            </button>
+
+                            {/* <button onClick={() => navigate('/wishlist')} className={navBtnStyle}>
+                                <div className={iconBoxStyle}><BiHeart className="text-[#4a634d]" size={18} /></div>
+                                <span>Wishlist</span>
+                            </button> */}
+
+                            <button onClick={() => navigate('/cart')} className={navBtnStyle}>
+                                <div className={iconBoxStyle}><MdOutlineShoppingCart className="text-[#4a634d]" size={18} /></div>
+                                <span>Cart</span>
+                            </button>
+
+                            <button onClick={() => navigate('/returnorders')} className={navBtnStyle}>
+                                <div className={iconBoxStyle}><TbTruckReturn className="text-[#4a634d]" size={18} /></div>
+                                <span>Returns</span>
+                            </button>
+
+                            <button onClick={() => navigate('/checkout')} className={navBtnStyle}>
+                                <div className={iconBoxStyle}><FaCashRegister className="text-[#4a634d]" size={18} /></div>
+                                <span>Checkout</span>
+                            </button>
+
+                            <div className={clsx('h-8', 'w-[1px]', 'bg-gray-200', 'mx-2', 'hidden', 'md:block')}></div>
+
+                            {/* <button onClick={() => navigate('/settings')} className={navBtnStyle}>
+                                <div className={iconBoxStyle}><BiCog className="text-[#4a634d]" size={18} /></div>
+                                <span>Settings</span>
+                            </button> */}
+
+                            <button onClick={() => navigate('/profile')} className={navBtnStyle}>
+                                <div className={iconBoxStyle}><BiUser className="text-[#4a634d]" size={18} /></div>
+                                <span>Profile</span>
+                            </button>
+
+                        </div>
+
+                        <div className={clsx('flex', 'items-center', 'gap-3')}>
                             {token ? (
-                                <div className="flex items-center gap-1">
-                                    <IconButton onClick={() => navigate('/')} icon={HiMiniHome} label="Home" />
-                                    <IconButton onClick={() => navigate('/orders')} icon={FaClipboardList} label="Orders" />
-                                    <IconButton onClick={() => navigate('/wishlist')} icon={BiHeart} label="Wishlist" />
-                                    <IconButton onClick={() => navigate('/cart')} icon={MdOutlineShoppingCart} label="Cart" />
-                                    <IconButton onClick={() => navigate('/returnorders')} icon={TbTruckReturn} label="Return Orders" />
-                                    <IconButton onClick={() => navigate('/checkout')} icon={FaCashRegister} label="Checkout" variant="primary" />
-                                    <div className="w-px h-8 bg-gray-200 mx-1" />
-                                    <IconButton onClick={() => navigate('/settings')} icon={BiCog} label="Settings" />
-                                    <IconButton onClick={() => navigate('/profile')} icon={BiUser} label="Profile" />
-                                    <IconButton onClick={handleLogout} icon={BiLogOut} label="Logout" variant="danger" />
-                                </div>
+                                <button
+                                    onClick={handleLogout}
+                                    className={clsx('group', 'flex', 'items-center', 'gap-2', 'px-5', 'py-2.5', 'bg-[#f32f2f]', 'text-white', 'rounded-2xl', 'font-bold', 'text-sm', 'shadow-lg', 'shadow-red-100', 'transition-all', 'hover:bg-[#dd0c0c]', 'active:scale-95')}
+                                >
+                                    <span className={clsx('hidden', 'sm:inline')}>Logout</span>
+                                    <BiLogOut className="text-lg" />
+                                </button>
                             ) : (
-                                <div className="flex items-center gap-1 md:gap-2">
-                                    <IconButton onClick={() => navigate('/login')} icon={BiLogIn} label="Login" />
-                                    <IconButton onClick={() => navigate('/')} icon={FaUserPlus} label="Register" variant="primary" />
-                                </div>
+                                <>
+                                    <button
+                                        onClick={() => navigate('/login')}
+                                        className={clsx('group', 'flex', 'items-center', 'gap-2', 'px-5', 'py-2.5', 'bg-[#2d4030]', 'text-white', 'rounded-2xl', 'font-bold', 'text-sm', 'shadow-lg', 'shadow-green-100', 'transition-all', 'hover:bg-[#1e2e20]', 'active:scale-95')}
+                                    >
+                                        <span className={clsx('hidden', 'sm:inline')}>Login</span>
+                                        <BiLogIn className="text-lg" />
+                                    </button>
+                                    <button
+                                        onClick={() => navigate('/userRegister')}
+                                        className={clsx('group', 'flex', 'items-center', 'gap-2', 'px-5', 'py-2.5', 'bg-[#2d4030]', 'text-white', 'rounded-2xl', 'font-bold', 'text-sm', 'shadow-lg', 'shadow-green-100', 'transition-all', 'hover:bg-[#1e2e20]', 'active:scale-95')}
+                                    >
+                                        <span className={clsx('hidden', 'sm:inline')}>Register</span>
+                                        <FaUserPlus className="text-lg" />
+                                    </button>
+                                </>
                             )}
                         </div>
                     </div>
@@ -157,4 +254,5 @@ export const Navbar = () => {
         </nav>
     );
 };
+
 export default Navbar;

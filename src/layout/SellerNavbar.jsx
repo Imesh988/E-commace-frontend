@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { BiLogOut } from "react-icons/bi";
-import { FaBoxes, FaClipboardList, FaBoxOpen } from "react-icons/fa";
+import { FaBoxes, FaClipboardList, FaBoxOpen, FaUser } from "react-icons/fa";
 import { SiHomebridge } from "react-icons/si";
 import { GrNodes } from "react-icons/gr";
 
@@ -57,6 +57,11 @@ export const SellerNavbar = ({ onLogout, profile }) => {
                             <button onClick={() => navigate('/sellerDashboard')} className={navBtnStyle}>
                                 <div className={iconBoxStyle}><SiHomebridge className="text-[#4a634d]" /></div>
                                 <span>Dashboard</span>
+                            </button>
+
+                            <button onClick={() => navigate('/profile')} className={navBtnStyle}>
+                                <div className={iconBoxStyle}><FaUser className="text-[#4a634d]" /></div>
+                                <span>Profile</span>
                             </button>
                         </div>
 

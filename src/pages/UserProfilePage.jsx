@@ -7,13 +7,25 @@ import 'react-toastify/dist/ReactToastify.css';
 import {
     IoLocationOutline,
     IoSaveOutline,
+    IoCameraOutline,
+    IoPersonOutline,
+    IoMailOutline,
+    IoRocketOutline,
+    IoTimeOutline,
+    IoAlertCircleOutline,
+    IoCheckmarkCircleOutline,
+    IoBuildOutline,
+    IoCallOutline,
+    IoHomeOutline,
+    IoPinOutline,
+    IoGlobeOutline
 } from 'react-icons/io5';
-import { MdOutlinePhotoCamera } from 'react-icons/md';
 import clsx from 'clsx';
 
 const LoadingSpinner = () => (
-    <div className={clsx('animate-spin', 'inline-block', 'w-6', 'h-6', 'border-[3px]', 'border-current', 'border-t-transparent', 'text-emerald-600', 'rounded-full')} role="status">
-        <span className="sr-only">Loading...</span>
+    <div className="flex flex-col items-center justify-center">
+        <div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin shadow-lg shadow-emerald-200/30"></div>
+        <p className="mt-4 text-sm font-medium text-slate-500 animate-pulse">Loading profile...</p>
     </div>
 );
 
@@ -50,33 +62,25 @@ const UserProfilePage = () => {
         fetchUserProfile();
     }, [navigate]);
 
-    // ✅ User Profile + Seller Info එක fetch කරන්න
     const fetchUserProfile = async () => {
         setLoading(true);
         try {
-            // 1. User Profile එක ගන්න
             const response = await userApi.getUserProfile();
             const userData = response.data;
             setUser(userData);
-              console.log('seller info' ,userData);
-            // 2. Seller තොරතුරු ගන්න (user_id එකෙන්)
+            
             try {
                 const sellerRes = await sellerApi.getSellerByUserId(userData.user_id);
                 if (sellerRes.data?.data) {
                     setSellerInfo(sellerRes.data.data);
-
-                  
-                    
                 }
             } catch (sellerErr) {
-                // Seller නැතිනම් 404 error එකක් එයි - ඒක ignore කරන්න
                 if (sellerErr.response?.status !== 404) {
                     console.error('Error fetching seller info:', sellerErr);
                 }
                 setSellerInfo(null);
             }
 
-            // 3. Shipping Address එක ගන්න
             let shippingAddress = {};
             try {
                 const shippingRes = await shippingAddressApi.getShippingAddressesByUserId(userData.user_id);
@@ -170,211 +174,219 @@ const UserProfilePage = () => {
             const updatedUser = { ...user, first_name: formData.first_name, last_name: formData.last_name };
             localStorage.setItem('user', JSON.stringify(updatedUser));
             setUser(updatedUser);
-            toast.success('Address saved successfully!');
+            toast.success('Profile & Address saved successfully!');
             await fetchUserProfile();
         } catch (error) {
-            toast.error(error.response?.data?.msg || 'Failed to save address');
+            toast.error(error.response?.data?.msg || 'Failed to save details');
         } finally {
             setSaving(false);
         }
     };
 
-    
-const handleBecomeSeller = async () => {
-    setCheckingSeller(true);
-    try {
-        const userId = user?.user_id;
-        if (!userId) {
-            toast.error('Please login first.');
-            navigate('/login');
-            return;
-        }
-
-        let sellerData = null;
-
-        // 1. API එකෙන් seller ගන්න try කරන්න
+    const handleBecomeSeller = async () => {
+        setCheckingSeller(true);
         try {
-            const response = await sellerApi.getSellerByUserId(userId);
-            sellerData = response.data?.data || response.data;
-        } catch (err) {
-            // API error ආවොත් (404/500) user data එකේ satus බලන්න
-            if (user?.satus !== undefined) {
-                sellerData = {
-                    user_id: user.user_id,
-                    status: user.satus,  // satus -> status
-                };
-            }
-        }
+            const userId = user?.user_id;
+            if (!userId) { navigate('/login'); return; }
 
-        if (sellerData) {
-            const status = sellerData.status;
-            console.log('Current seller status:', status);
-
-            if (status === 1) {
-                toast.success('Welcome back! Redirecting to seller dashboard...');
-                navigate('/sellerDashboard');
-                return;
-            } else if (status === 2) {
-                toast.info('Your seller application is pending approval. Please wait.');
-                navigate('/pending');
-                return;
-            } else if (status === 3) {
-                toast.warning('Your application was rejected. Please re-submit.');
-                navigate('/seller', {
-                    state: {
-                        editingSeller: sellerData,
-                        isReapply: true,
-                    }
-                });
-                return;
-            }
-        }
-
-        // ❌ Seller record එකක් නැත – new application
-       navigate('/seller', {
-            state: {
-                userData: {
-                    user_id: user.user_id,              // ✅ user_id එක එකතු කරන්න
-                    first_name: formData.first_name,
-                    last_name: formData.last_name,
-                    email: formData.email,
-                    mobile_no: formData.mobile_no_1,
+            let sellerData = null;
+            try {
+                const response = await sellerApi.getSellerByUserId(userId);
+                sellerData = response.data?.data || response.data;
+            } catch (err) {
+                if (user?.satus !== undefined) {
+                    sellerData = { user_id: user.user_id, status: user.satus };
                 }
             }
-        });
 
-    } catch (error) {
-        console.error('Error checking seller status:', error);
-        toast.error('Something went wrong. Please try again.');
-    } finally {
-        setCheckingSeller(false);
-    }
-};
+            if (sellerData) {
+                const status = sellerData.status;
+                if (status === 1) { navigate('/sellerDashboard'); return; }
+                else if (status === 2) { navigate('/pending'); return; }
+                else if (status === 3) {
+                    navigate('/seller', { state: { editingSeller: sellerData, isReapply: true } });
+                    return;
+                }
+            }
+
+            navigate('/seller', {
+                state: {
+                    userData: {
+                        user_id: user.user_id,
+                        first_name: formData.first_name,
+                        last_name: formData.last_name,
+                        email: formData.email,
+                        mobile_no: formData.mobile_no_1,
+                    }
+                }
+            });
+        } catch (error) {
+            toast.error('Something went wrong.');
+        } finally {
+            setCheckingSeller(false);
+        }
+    };
+
     if (loading) {
         return (
-            <>
-                <Navbar />
-                <div className={clsx('flex', 'justify-center', 'items-center', 'min-h-screen', 'bg-gradient-to-br', 'from-gray-50', 'to-gray-200')}>
-                    <div className="text-center">
-                        <LoadingSpinner />
-                        <p className={clsx('mt-3', 'text-gray-600', 'font-medium')}>Loading your profile...</p>
-                    </div>
-                </div>
-            </>
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50/20 to-amber-50/30 flex items-center justify-center">
+                <LoadingSpinner />
+            </div>
         );
     }
 
     const fullName = `${formData.first_name} ${formData.last_name}`.trim() || 'User Name';
     const userInitial = fullName.charAt(0).toUpperCase();
-    const email = formData.email;
 
     return (
-        <>
-            <div className={clsx('relative', 'min-h-screen', 'bg-gradient-to-br', 'from-violet-50', 'via-fuchsia-50', 'to-amber-50', 'font-sans', 'overflow-x-hidden')}>
-                {/* Background Circles */}
-                <div className={clsx('absolute', 'top-0', 'left-0', 'w-80', 'h-80', 'bg-emerald-200', 'rounded-full', 'mix-blend-multiply', 'filter', 'blur-xl', 'opacity-30', 'animate-blob', 'z-0')}></div>
-                <div className={clsx('absolute', 'bottom-0', 'right-0', 'w-72', 'h-72', 'bg-emerald-100', 'rounded-full', 'mix-blend-multiply', 'filter', 'blur-xl', 'opacity-30', 'animate-blob', 'animation-delay-4000', 'z-0')}></div>
-                <div className={clsx('absolute', 'bottom-1/4', 'right-1/2', 'w-64', 'h-64', 'bg-yellow-100', 'rounded-full', 'mix-blend-multiply', 'filter', 'blur-xl', 'opacity-30', 'animate-blob', 'z-0')}></div>
-                <div className={clsx('absolute', 'top-1/2', 'left-1/4', 'w-96', 'h-96', 'bg-purple-200', 'rounded-full', 'mix-blend-multiply', 'filter', 'blur-xl', 'opacity-30', 'animate-blob', 'animation-delay-2000', 'z-0')}></div>
-                <ToastContainer position="top-right" autoClose={3000} />
-                <Navbar />
-                <div className={clsx('max-w-7xl', 'mx-auto', 'px-4', 'sm:px-6', 'lg:px-8', 'py-6', 'sm:py-8', 'lg:py-10')}>
-                    <div className={clsx('grid', 'grid-cols-1', 'lg:grid-cols-3', 'gap-6', 'lg:gap-8')}>
-                        <div className={clsx('lg:col-span-1', 'space-y-6')}>
-                            <div className={clsx('bg-white', 'rounded-2xl', 'shadow-lg', 'overflow-hidden')}>
-                                <div className={clsx('bg-gradient-to-r', 'from-emerald-500', 'to-teal-600', 'h-20', 'sm:h-24')}></div>
-                                <div className={clsx('relative', 'px-4', 'sm:px-6', 'pb-6')}>
-                                    <div className={clsx('relative', '-mt-10', 'sm:-mt-12', 'flex', 'justify-center')}>
-                                        <div className={clsx('w-20', 'h-20', 'sm:w-24', 'sm:h-24', 'rounded-full', 'bg-white', 'p-1', 'shadow-xl')}>
-                                            {profileImage ? (
-                                                <img
-                                                    src={profileImage}
-                                                    alt="Profile"
-                                                    className={clsx('w-full', 'h-full', 'rounded-full', 'object-cover')}
-                                                />
-                                            ) : (
-                                                <div className={clsx('w-full', 'h-full', 'rounded-full', 'bg-gradient-to-r', 'from-emerald-400', 'to-teal-500', 'flex', 'items-center', 'justify-center', 'text-white', 'text-2xl', 'sm:text-3xl', 'font-bold')}>
-                                                    {userInitial}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <label className={clsx('absolute', 'bottom-0', 'right-1/3', 'bg-white', 'rounded-full', 'p-1', 'shadow-md', 'hover:bg-gray-100', 'transition', 'cursor-pointer')}>
-                                            <MdOutlinePhotoCamera size={14} className={clsx('text-gray-600', 'sm:text-base')} />
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                className="hidden"
-                                                onChange={handleImageChange}
-                                            />
-                                        </label>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50/20 to-amber-50/30 font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900 relative overflow-hidden">
+            {/* Background Blobs - Enhanced */}
+            <div className="fixed inset-0 pointer-events-none z-0">
+                <div className="absolute -top-40 -right-40 w-96 h-96 bg-emerald-200/40 rounded-full blur-3xl"></div>
+                <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-amber-200/30 rounded-full blur-3xl"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-100/20 rounded-full blur-3xl"></div>
+                <div className="absolute top-20 left-20 w-64 h-64 bg-purple-100/20 rounded-full blur-2xl"></div>
+                <div className="absolute bottom-20 right-20 w-64 h-64 bg-blue-100/20 rounded-full blur-2xl"></div>
+            </div>
+
+            <Navbar />
+            <ToastContainer position="top-right" autoClose={3000} theme="light" />
+
+            <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-16">
+                {/* Header Section - Premium */}
+                <div className="mb-12 text-center sm:text-left">
+                    <div className="inline-block p-1.5 bg-gradient-to-r from-emerald-500 to-teal-400 rounded-2xl shadow-lg shadow-emerald-200/30 mb-4">
+                        <div className="bg-white/90 backdrop-blur-sm px-6 py-2 rounded-xl">
+                            <span className="text-xs font-black text-emerald-600 uppercase tracking-[0.3em]">Account Management</span>
+                        </div>
+                    </div>
+                    <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.1]">
+                    </h1>
+                    
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    
+                    {/* Left Column - Profile Card (Premium) */}
+                    <div className="lg:col-span-4 space-y-6">
+                        <div className="relative group bg-white/70 backdrop-blur-xl rounded-[40px] border border-white/50 p-8 shadow-2xl shadow-emerald-900/5 hover:shadow-emerald-900/10 transition-shadow duration-500 overflow-hidden">
+                            {/* Subtle gradient accent */}
+                            <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-200/30 rounded-full blur-2xl"></div>
+                            <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-amber-100/30 rounded-full blur-2xl"></div>
+                            
+                            <div className="relative flex flex-col items-center">
+                                {/* Profile Image with creative border */}
+                                <div className="relative group/image">
+                                    <div className="w-36 h-36 rounded-[40px] overflow-hidden shadow-2xl shadow-emerald-200/40 ring-4 ring-white/80 transform group-hover/image:scale-105 transition-all duration-500">
+                                        {profileImage ? (
+                                            <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-5xl font-black">
+                                                {userInitial}
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className={clsx('text-center', 'mt-2')}>
-                                        <h2 className={clsx('text-lg', 'sm:text-xl', 'font-bold', 'text-gray-800')}>{fullName}</h2>
-                                    </div>
-                                    <div className={clsx('text-center', '-mt-0.5')}>
-                                        <h2 className={clsx('text-sm', 'sm:text-base', 'text-blue-500', 'break-all')}>{email}</h2>
-                                    </div>
-                                    {/* ✅ Seller Status Badge */}
-                                    {sellerInfo && (
-                                        <div className={clsx('mt-3', 'text-center')}>
-                                            <span className={clsx(
-                                                "px-3 py-1 text-xs font-semibold rounded-full",
-                                                sellerInfo.status === 1 ? "bg-emerald-100 text-emerald-700" :
-                                                sellerInfo.status === 2 ? "bg-yellow-100 text-yellow-700" :
-                                                sellerInfo.status === 3 ? "bg-rose-100 text-rose-700" :
-                                                "bg-gray-100 text-gray-600"
-                                            )}>
-                                                {sellerInfo.status === 1 ? "✅ Seller (Approved)" :
-                                                 sellerInfo.status === 2 ? "⏳ Seller (Pending)" :
-                                                 sellerInfo.status === 3 ? "❌ Seller (Rejected)" :
-                                                 "🚫 Seller (Deleted)"}
-                                            </span>
-                                        </div>
-                                    )}
+                                    <label className="absolute -bottom-2 -right-2 bg-slate-900 text-white p-3 rounded-2xl cursor-pointer hover:bg-emerald-600 transition-all shadow-xl hover:scale-110 active:scale-95">
+                                        <IoCameraOutline size={22} />
+                                        <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                                    </label>
                                 </div>
+
+                                <div className="mt-8 text-center space-y-1">
+                                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">{fullName}</h2>
+                                    <p className="text-sm font-medium text-emerald-600 flex items-center justify-center gap-2 bg-emerald-50/50 px-4 py-1.5 rounded-full">
+                                        <IoMailOutline size={16} />
+                                        {formData.email}
+                                    </p>
+                                </div>
+
+                                {/* Seller Status - Enhanced */}
+                                {sellerInfo && (
+                                    <div className="mt-6 w-full pt-6 border-t border-slate-200/30">
+                                        <div className={clsx(
+                                            "flex items-center justify-center gap-3 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-widest border transition-all",
+                                            sellerInfo.status === 1 ? "bg-emerald-50/80 text-emerald-700 border-emerald-200/50 shadow-sm shadow-emerald-100/50" :
+                                            sellerInfo.status === 2 ? "bg-amber-50/80 text-amber-700 border-amber-200/50 shadow-sm shadow-amber-100/50" :
+                                            sellerInfo.status === 3 ? "bg-rose-50/80 text-rose-700 border-rose-200/50 shadow-sm shadow-rose-100/50" :
+                                            "bg-slate-50/80 text-slate-600 border-slate-200/50"
+                                        )}>
+                                            {sellerInfo.status === 1 ? <IoCheckmarkCircleOutline size={18} /> :
+                                             sellerInfo.status === 2 ? <IoTimeOutline size={18} /> :
+                                             sellerInfo.status === 3 ? <IoAlertCircleOutline size={18} /> : null}
+                                            {sellerInfo.status === 1 ? "Verified Seller" :
+                                             sellerInfo.status === 2 ? "Application Pending" :
+                                             sellerInfo.status === 3 ? "Application Rejected" : "Account Restricted"}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        <div className={clsx('lg:col-span-2', 'space-y-6')}>
-                            <div className={clsx('bg-white', 'rounded-2xl', 'shadow-lg', 'p-4', 'sm:p-6')}>
-                                <div className={clsx('flex', 'items-center', 'gap-3', 'mb-6')}>
-                                    <div className={clsx('p-2', 'bg-emerald-100', 'rounded-xl')}>
-                                        <IoLocationOutline size={20} className={clsx('text-emerald-600', 'sm:text-2xl')} />
+                        {/* Quick Stats (optional creative touch) */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 text-center border border-white/30 shadow-sm">
+                                <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Orders</p>
+                                <p className="text-xl font-bold text-slate-800">—</p>
+                            </div>
+                            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 text-center border border-white/30 shadow-sm">
+                                <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Wishlist</p>
+                                <p className="text-xl font-bold text-slate-800">—</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column - Form Card (Premium) */}
+                    <div className="lg:col-span-8">
+                        <div className="bg-white/70 backdrop-blur-xl rounded-[45px] border border-white/50 p-8 sm:p-10 shadow-2xl shadow-emerald-900/5 hover:shadow-emerald-900/10 transition-shadow duration-500 relative overflow-hidden">
+                            {/* Decorative accent */}
+                            <div className="absolute -top-32 -right-32 w-64 h-64 bg-emerald-100/20 rounded-full blur-3xl"></div>
+                            <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-amber-100/20 rounded-full blur-3xl"></div>
+
+                            <div className="relative">
+                                <div className="flex items-center gap-4 mb-10">
+                                    <div className="p-4 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-2xl shadow-inner">
+                                        <IoLocationOutline className="text-2xl text-emerald-600" />
                                     </div>
                                     <div>
-                                        <h3 className={clsx('text-base', 'sm:text-lg', 'font-bold', 'text-gray-800')}>Shipping Address</h3>
-                                        <p className={clsx('text-xs', 'sm:text-sm', 'text-gray-500')}>Manage your delivery details</p>
+                                        <h3 className="text-xl font-black text-slate-900">Delivery Information</h3>
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-[0.15em] mt-0.5">Primary shipping address</p>
                                     </div>
                                 </div>
 
-                                <form onSubmit={handleSaveAddress} className={clsx('space-y-4', 'sm:space-y-5')}>
-                                    <div className={clsx('grid', 'grid-cols-1', 'sm:grid-cols-2', 'gap-4', 'sm:gap-5')}>
-                                        <div>
-                                            <label className={clsx('block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1')}>First Name</label>
+                                <form onSubmit={handleSaveAddress} className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                                <IoPersonOutline size={14} /> First Name
+                                            </label>
                                             <input
                                                 type="text"
                                                 name="first_name"
                                                 value={formData.first_name}
                                                 onChange={handleInputChange}
                                                 required
-                                                className={clsx('w-full', 'px-3', 'py-2', 'sm:px-4', 'sm:py-2.5', 'rounded-xl', 'border', 'border-gray-200', 'focus:border-emerald-500', 'focus:ring-2', 'focus:ring-emerald-200', 'outline-none', 'transition')}
+                                                className="w-full bg-slate-50/80 border border-slate-200/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 outline-none transition-all font-semibold text-slate-800 placeholder:text-slate-300"
                                             />
                                         </div>
-                                        <div>
-                                            <label className={clsx('block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1')}>Last Name</label>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                                <IoPersonOutline size={14} /> Last Name
+                                            </label>
                                             <input
                                                 type="text"
                                                 name="last_name"
                                                 value={formData.last_name}
                                                 onChange={handleInputChange}
                                                 required
-                                                className={clsx('w-full', 'px-3', 'py-2', 'sm:px-4', 'sm:py-2.5', 'rounded-xl', 'border', 'border-gray-200', 'focus:border-emerald-500', 'focus:ring-2', 'focus:ring-emerald-200', 'outline-none', 'transition')}
+                                                className="w-full bg-slate-50/80 border border-slate-200/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 outline-none transition-all font-semibold text-slate-800 placeholder:text-slate-300"
                                             />
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className={clsx('block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1')}>Address Line 1</label>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                            <IoHomeOutline size={14} /> Address Line 1
+                                        </label>
                                         <input
                                             type="text"
                                             name="address_line1"
@@ -382,127 +394,116 @@ const handleBecomeSeller = async () => {
                                             onChange={handleInputChange}
                                             required
                                             placeholder="House number, street name"
-                                            className={clsx('w-full', 'px-3', 'py-2', 'sm:px-4', 'sm:py-2.5', 'rounded-xl', 'border', 'border-gray-200', 'focus:border-emerald-500', 'focus:ring-2', 'focus:ring-emerald-200', 'outline-none', 'transition')}
+                                            className="w-full bg-slate-50/80 border border-slate-200/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 outline-none transition-all font-semibold text-slate-800 placeholder:text-slate-300"
                                         />
                                     </div>
 
-                                    <div>
-                                        <label className={clsx('block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1')}>Address Line 2 (Optional)</label>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Address Line 2 <span className="font-normal text-slate-300">(Optional)</span></label>
                                         <input
                                             type="text"
                                             name="address_line2"
                                             value={formData.address_line2}
                                             onChange={handleInputChange}
                                             placeholder="Apartment, suite, unit, etc."
-                                            className={clsx('w-full', 'px-3', 'py-2', 'sm:px-4', 'sm:py-2.5', 'rounded-xl', 'border', 'border-gray-200', 'focus:border-emerald-500', 'focus:ring-2', 'focus:ring-emerald-200', 'outline-none', 'transition')}
+                                            className="w-full bg-slate-50/80 border border-slate-200/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 outline-none transition-all font-semibold text-slate-800 placeholder:text-slate-300"
                                         />
                                     </div>
 
-                                    <div className={clsx('grid', 'grid-cols-1', 'sm:grid-cols-2', 'gap-4', 'sm:gap-5')}>
-                                        <div>
-                                            <label className={clsx('block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1')}>City</label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                                <IoPinOutline size={14} /> City
+                                            </label>
                                             <input
                                                 type="text"
                                                 name="city"
                                                 value={formData.city}
                                                 onChange={handleInputChange}
                                                 required
-                                                className={clsx('w-full', 'px-3', 'py-2', 'sm:px-4', 'sm:py-2.5', 'rounded-xl', 'border', 'border-gray-200', 'focus:border-emerald-500', 'focus:ring-2', 'focus:ring-emerald-200', 'outline-none', 'transition')}
+                                                className="w-full bg-slate-50/80 border border-slate-200/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 outline-none transition-all font-semibold text-slate-800 placeholder:text-slate-300"
                                             />
                                         </div>
-                                        <div>
-                                            <label className={clsx('block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1')}>District</label>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                                <IoPinOutline size={14} /> District
+                                            </label>
                                             <input
                                                 type="text"
                                                 name="district"
                                                 value={formData.district}
                                                 onChange={handleInputChange}
                                                 required
-                                                className={clsx('w-full', 'px-3', 'py-2', 'sm:px-4', 'sm:py-2.5', 'rounded-xl', 'border', 'border-gray-200', 'focus:border-emerald-500', 'focus:ring-2', 'focus:ring-emerald-200', 'outline-none', 'transition')}
+                                                className="w-full bg-slate-50/80 border border-slate-200/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 outline-none transition-all font-semibold text-slate-800 placeholder:text-slate-300"
                                             />
                                         </div>
                                     </div>
 
-                                    <div className={clsx('grid', 'grid-cols-1', 'sm:grid-cols-2', 'gap-4', 'sm:gap-5')}>
-                                        <div>
-                                            <label className={clsx('block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1')}>Postal Code</label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                                <IoGlobeOutline size={14} /> Postal Code
+                                            </label>
                                             <input
                                                 type="text"
                                                 name="postal_code"
                                                 value={formData.postal_code}
                                                 onChange={handleInputChange}
                                                 required
-                                                className={clsx('w-full', 'px-3', 'py-2', 'sm:px-4', 'sm:py-2.5', 'rounded-xl', 'border', 'border-gray-200', 'focus:border-emerald-500', 'focus:ring-2', 'focus:ring-emerald-200', 'outline-none', 'transition')}
+                                                className="w-full bg-slate-50/80 border border-slate-200/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 outline-none transition-all font-semibold text-slate-800 placeholder:text-slate-300"
                                             />
                                         </div>
-                                        <div>
-                                            <label className={clsx('block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1')}>Country</label>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                                                <IoCallOutline size={14} /> Phone Number
+                                            </label>
                                             <input
-                                                type="text"
-                                                name="country"
-                                                value={formData.country}
+                                                type="tel"
+                                                name="mobile_no_1"
+                                                value={formData.mobile_no_1}
                                                 onChange={handleInputChange}
                                                 required
-                                                className={clsx('w-full', 'px-3', 'py-2', 'sm:px-4', 'sm:py-2.5', 'rounded-xl', 'border', 'border-gray-200', 'focus:border-emerald-500', 'focus:ring-2', 'focus:ring-emerald-200', 'outline-none', 'transition')}
+                                                placeholder="+94 XX XXX XXXX"
+                                                className="w-full bg-slate-50/80 border border-slate-200/50 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 outline-none transition-all font-semibold text-slate-800 placeholder:text-slate-300"
                                             />
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className={clsx('block', 'text-sm', 'font-medium', 'text-gray-700', 'mb-1')}>Phone Number</label>
-                                        <input
-                                            type="tel"
-                                            name="mobile_no_1"
-                                            value={formData.mobile_no_1}
-                                            onChange={handleInputChange}
-                                            required
-                                            placeholder="+94 XX XXX XXXX"
-                                            className={clsx('w-full', 'px-3', 'py-2', 'sm:px-4', 'sm:py-2.5', 'rounded-xl', 'border', 'border-gray-200', 'focus:border-emerald-500', 'focus:ring-2', 'focus:ring-emerald-200', 'outline-none', 'transition')}
-                                        />
-                                    </div>
-
-                                    <div className={clsx('flex', 'flex-col', 'sm:flex-row', 'gap-3', 'sm:gap-4', 'pt-4')}>
+                                    <div className="flex flex-col sm:flex-row gap-4 pt-6">
                                         <button
                                             type="submit"
                                             disabled={saving}
-                                            className={clsx('flex-1', 'bg-gradient-to-r', 'from-emerald-600', 'to-teal-600', 'text-white', 'px-4', 'py-2.5', 'sm:px-6', 'sm:py-3', 'rounded-xl', 'font-semibold', 'flex', 'items-center', 'justify-center', 'gap-2', 'hover:from-emerald-700', 'hover:to-teal-700', 'transition', 'duration-200', 'shadow-md', 'hover:shadow-lg', 'disabled:opacity-70', 'text-sm', 'sm:text-base')}
+                                            className="flex-1 bg-gradient-to-r from-slate-800 to-slate-900 text-white px-8 py-5 rounded-[25px] font-black uppercase tracking-[0.15em] text-xs hover:from-emerald-600 hover:to-emerald-500 transition-all shadow-xl shadow-slate-200/50 hover:shadow-emerald-200/50 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
                                         >
-                                            {saving ? <LoadingSpinner /> : <IoSaveOutline size={18} className="sm:text-xl" />}
-                                            {saving ? 'Saving...' : 'Save Address'}
+                                            {saving ? (
+                                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            ) : (
+                                                <IoSaveOutline size={20} />
+                                            )}
+                                            {saving ? 'Saving...' : 'Save Profile'}
                                         </button>
 
-                                        {/* ✅ Become a Seller Button */}
                                         <button
                                             type="button"
                                             onClick={handleBecomeSeller}
                                             disabled={checkingSeller}
                                             className={clsx(
-                                                'flex-1',
-                                                'bg-gradient-to-r',
-                                                sellerInfo?.status === 1 ? 'from-emerald-500 to-emerald-600' :
-                                                sellerInfo?.status === 2 ? 'from-yellow-500 to-yellow-600' :
-                                                sellerInfo?.status === 3 ? 'from-rose-500 to-rose-600' :
-                                                'from-amber-500 to-orange-500',
-                                                'text-white',
-                                                'px-4', 'py-2.5', 'sm:px-6', 'sm:py-3',
-                                                'rounded-xl', 'font-semibold',
-                                                'hover:shadow-lg',
-                                                'transition', 'duration-200', 'shadow-md',
-                                                'disabled:opacity-70',
-                                                'text-sm', 'sm:text-base'
+                                                'flex-1 px-8 py-5 rounded-[25px] font-black uppercase tracking-[0.15em] text-xs transition-all shadow-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3',
+                                                sellerInfo?.status === 1 ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-emerald-200/50 hover:shadow-emerald-300/60' :
+                                                sellerInfo?.status === 2 ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-amber-200/50' :
+                                                sellerInfo?.status === 3 ? 'bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-rose-200/50' :
+                                                'bg-white border border-slate-200 text-slate-700 shadow-slate-100/50 hover:border-emerald-300 hover:text-emerald-600 hover:shadow-emerald-100/50'
                                             )}
                                         >
                                             {checkingSeller ? (
-                                                <span className={clsx('flex', 'items-center', 'gap-2')}>
-                                                    <span className={clsx('animate-spin', 'rounded-full', 'h-4', 'w-4', 'border-2', 'border-white', 'border-t-transparent')} />
-                                                    Checking...
-                                                </span>
+                                                <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                                             ) : (
-                                                sellerInfo?.status === 1 ? '🚀 Go to Seller Dashboard' :
-                                                sellerInfo?.status === 2 ? '⏳ Pending Approval' :
-                                                sellerInfo?.status === 3 ? '🔄 Re-Apply as Seller' :
-                                                '🛒 Become a Seller'
+                                                <IoRocketOutline size={20} />
                                             )}
+                                            {sellerInfo?.status === 1 ? '🚀 Dashboard' :
+                                             sellerInfo?.status === 2 ? '⏳ Pending Review' :
+                                             sellerInfo?.status === 3 ? '🔄 Re-Apply' :
+                                             '🛒 Start Selling'}
                                         </button>
                                     </div>
                                 </form>
@@ -510,8 +511,25 @@ const handleBecomeSeller = async () => {
                         </div>
                     </div>
                 </div>
-            </div>
-        </>
+            </main>
+
+            <style jsx>{`
+                @keyframes blob {
+                    0%, 100% { transform: translate(0px, 0px) scale(1); }
+                    33% { transform: translate(30px, -50px) scale(1.1); }
+                    66% { transform: translate(-20px, 20px) scale(0.9); }
+                }
+                .animate-blob {
+                    animation: blob 10s infinite;
+                }
+                .animation-delay-2000 {
+                    animation-delay: 2s;
+                }
+                .animation-delay-4000 {
+                    animation-delay: 4s;
+                }
+            `}</style>
+        </div>
     );
 };
 

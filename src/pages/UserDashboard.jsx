@@ -8,6 +8,7 @@ import { MdLocalShipping } from 'react-icons/md';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { BiSearch, BiX } from 'react-icons/bi'; // added for search
 
 const BASE_URL = "http://localhost:5000";
 
@@ -25,11 +26,21 @@ const UserDashboard = () => {
     const cartRef = useRef(null);
     const lastToastId = useRef(null);
 
+    // ---------- SEARCH STATE ----------
     const location = useLocation();
     const navigate = useNavigate();
     const currentSearchTerm = new URLSearchParams(location.search).get('search') || '';
     const currentCategory = new URLSearchParams(location.search).get('category') || '';
 
+    const [searchInput, setSearchInput] = useState(currentSearchTerm);
+    const debounceTimer = useRef(null);
+
+    // Sync search input when URL changes (e.g., from navbar search)
+    useEffect(() => {
+        setSearchInput(currentSearchTerm);
+    }, [currentSearchTerm]);
+
+    // ---------- CLICK OUTSIDE CART ----------
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (cartRef.current && !cartRef.current.contains(event.target)) {
@@ -40,6 +51,7 @@ const UserDashboard = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // ---------- GUEST CART PERSISTENCE ----------
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -49,6 +61,7 @@ const UserDashboard = () => {
         }
     }, [cartItems]);
 
+    // ---------- FETCH PRODUCTS ----------
     const fetchProductImages = useCallback(async (searchTermParam, categoryParam) => {
         setLoadingProductImages(true);
         try {
@@ -97,6 +110,7 @@ const UserDashboard = () => {
         }
     }, []);
 
+    // ---------- FETCH CART ----------
     const fetchCartItems = async () => {
         setCartLoading(true);
         const token = localStorage.getItem('token');
@@ -115,11 +129,13 @@ const UserDashboard = () => {
         setCartLoading(false);
     };
 
+    // ---------- TRIGGER FETCH ON URL CHANGE ----------
     useEffect(() => {
         fetchProductImages(currentSearchTerm, currentCategory);
         fetchCartItems();
     }, [fetchProductImages, currentSearchTerm, currentCategory]);
 
+    // ---------- LISTEN FOR CART UPDATES ----------
     useEffect(() => {
         const handleCartUpdate = () => {
             fetchCartItems();
@@ -130,6 +146,34 @@ const UserDashboard = () => {
         };
     }, []);
 
+    // ---------- SEARCH HANDLER (debounced) ----------
+    const handleSearchChange = (e) => {
+        const value = e.target.value;
+        setSearchInput(value);
+
+        if (debounceTimer.current) {
+            clearTimeout(debounceTimer.current);
+        }
+
+        debounceTimer.current = setTimeout(() => {
+            const queryParams = new URLSearchParams(location.search);
+            if (value.trim()) {
+                queryParams.set('search', value.trim());
+            } else {
+                queryParams.delete('search');
+            }
+            navigate(`${location.pathname}?${queryParams.toString()}`);
+        }, 400);
+    };
+
+    const clearSearch = () => {
+        setSearchInput('');
+        const queryParams = new URLSearchParams(location.search);
+        queryParams.delete('search');
+        navigate(`${location.pathname}?${queryParams.toString()}`);
+    };
+
+    // ---------- CART HANDLERS (unchanged) ----------
     const handleAddToCart = async (product) => {
         if (isAddingRef.current) {
             return;
@@ -217,8 +261,6 @@ const UserDashboard = () => {
                 toast.error(error.message || 'Failed to add to cart');
             }
 
-
-
         } finally {
             setTimeout(() => {
                 isAddingRef.current = false;
@@ -281,11 +323,6 @@ const UserDashboard = () => {
             return;
         }
 
-        // if (cartItems.length === 0) {
-        //     toast.warning("ඔබේ කාර්ට් එක හිස්ය. කරුණාකර අයිතම් එකතු කරන්න.");
-        //     return;
-        // }
-
         window.location.href = '/checkout';
     };
 
@@ -305,22 +342,83 @@ const UserDashboard = () => {
             />
 
             <div className="relative min-h-screen bg-gradient-to-br from-emerald-50 to-yellow-50 font-sans overflow-hidden">
-                <div className="absolute top-0 left-0 w-80 h-80 bg-emerald-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>
-                <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000 z-0"></div>
-                <div className="absolute bottom-0 right-0 w-72 h-72 bg-emerald-100 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000 z-0"></div>
-                <div className="absolute bottom-1/4 right-1/2 w-64 h-64 bg-yellow-100 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>
+                {/* ---------- CREATIVE BACKGROUND PARTICLES ---------- */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    {[...Array(20)].map((_, i) => (
+                        <div
+                            key={i}
+                            className="absolute rounded-full bg-emerald-200/20 animate-float"
+                            style={{
+                                width: Math.random() * 8 + 4 + 'px',
+                                height: Math.random() * 8 + 4 + 'px',
+                                left: Math.random() * 100 + '%',
+                                top: Math.random() * 100 + '%',
+                                animationDelay: Math.random() * 10 + 's',
+                                animationDuration: Math.random() * 15 + 10 + 's',
+                            }}
+                        />
+                    ))}
+                </div>
+
+                {/* Original animated blobs (green + orange) */}
+                <div className="absolute top-0 left-0 w-80 h-80 bg-green-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>
+                <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-orange-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000 z-0"></div>
+                <div className="absolute bottom-0 right-0 w-72 h-72 bg-green-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000 z-0"></div>
+                <div className="absolute bottom-1/4 right-1/2 w-64 h-64 bg-orange-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>
+
                 <Navbar />
 
                 <div className="relative z-10 max-w-9xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    {/* ---------- SEARCH BAR (ADDED) ---------- */}
+                    <div className="mb-6 flex items-center justify-between gap-4">
+                      <div className="relative flex-1 max-w-md">
+    <BiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
+    <input
+        type="text"
+        value={searchInput}
+        onChange={handleSearchChange}
+        placeholder="Search products..."
+        className="w-full pl-10 pr-10 py-2.5 bg-white border border-gray-200 rounded-full focus:ring-2 focus:ring-emerald-500 hover:border-emerald-400 focus:border-emerald-500 outline-none transition shadow-sm text-sm"
+    />
+    {searchInput && (
+        <button
+            onClick={clearSearch}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+        >
+            <BiX size={20} />
+        </button>
+    )}
+</div>
+                        {currentCategory && currentCategory !== "All Categories" && (
+                            <span className="text-sm text-gray-600 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-200 shadow-sm">
+                                Category: {currentCategory}
+                            </span>
+                        )}
+                    </div>
+
                     {loadingProductImages ? (
-                        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 animate-pulse">
+                        // ---------- SKELETON LOADING ----------
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                             {[...Array(10)].map((_, index) => (
-                                <div key={index} className="bg-gray-200 rounded-lg overflow-hidden shadow-sm h-72"></div>
+                                <div key={index} className="bg-white rounded-xl shadow-sm overflow-hidden h-80 animate-pulse">
+                                    <div className="w-full h-48 bg-gray-200"></div>
+                                    <div className="p-4 space-y-3">
+                                        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                                        <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                                            <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                                        </div>
+                                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                                        <div className="h-10 bg-gray-200 rounded w-full"></div>
+                                    </div>
+                                </div>
                             ))}
                         </div>
                     ) : productImages.length > 0 ? (
-                        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                            {productImages.map((productImage) => {
+                        // ---------- CREATIVE PRODUCT CARDS (unchanged) ----------
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                            {productImages.map((productImage, index) => {
                                 const originalPrice = parseFloat(productImage.price);
                                 let displayPrice = originalPrice;
                                 let discountAmountText = "";
@@ -330,7 +428,6 @@ const UserDashboard = () => {
                                     hasDiscount = true;
                                     const discountType = productImage.discount_type;
                                     const discountValue = parseFloat(productImage.discount_amount);
-
                                     if (discountType === "percentage") {
                                         displayPrice = originalPrice * (1 - discountValue / 100);
                                         discountAmountText = `${discountValue}% OFF`;
@@ -344,68 +441,113 @@ const UserDashboard = () => {
                                 return (
                                     <div
                                         key={productImage.image_id}
-                                        className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden relative group transform hover:-translate-y-1 border border-gray-100"
+                                        className="group animate-fade-up"
+                                        style={{ animationDelay: `${index * 50}ms` }}
                                     >
-                                        <div className="relative w-full h-48 overflow-hidden bg-gray-100">
-                                            {productImage.image ? (
-                                                <img
-                                                    src={`${BASE_URL}${productImage.image.startsWith('/') ? productImage.image : `/${productImage.image}`}`}
-                                                    alt={productImage.product_name || "Product Image"}
-                                                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500 ease-in-out"
-                                                    onError={(e) => { e.target.src = "https://via.placeholder.com/200x150?text=No+Image"; }}
-                                                />
-                                            ) : (
-                                                <img
-                                                    src="https://via.placeholder.com/200x150?text=No+Image"
-                                                    alt="No Product Image"
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            )}
-                                            {hasDiscount && (
-                                                <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md">
-                                                    {discountAmountText}
-                                                </span>
-                                            )}
+                                        {/* Card with rotating gradient border on hover */}
+                                        <div className="relative bg-white rounded-xl shadow-sm hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-transparent transform hover:-translate-y-2 hover:scale-[1.02]">
+                                            {/* Rotating gradient border wrapper */}
+                                            <div className="absolute inset-0 rounded-xl p-[2px] bg-gradient-to-r from-emerald-400 via-amber-400 to-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 group-hover:animate-rotate-border"></div>
 
-                                            <button
-                                                onClick={() => handleAddToCart(productImage)}
-                                                disabled={addingToCart[productImage.image_id]}
-                                                className={`absolute bottom-2 right-2 p-2 bg-emerald-600 text-white rounded-full opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300 transform shadow-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed`}
-                                                title="Add to Cart"
-                                            >
-                                                {addingToCart[productImage.image_id] ? (
-                                                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                    </svg>
-                                                ) : (
-                                                    <CiShoppingCart size={20} className="stroke-2" />
-                                                )}
-                                            </button>
-                                        </div>
-                                        <div className="p-4">
-                                            <h3 className="text-base font-semibold text-gray-800 mb-1 leading-tight truncate" title={productImage.product_name}>
-                                                {productImage.product_name || "Untitled Product"}
-                                            </h3>
-                                            {productImage.category_name && (
-                                                <p className="text-xs text-gray-500 mb-2 truncate" title={productImage.category_name}>
-                                                    Category: {productImage.category_name}
-                                                </p>
-                                            )}
-                                            <div className="flex items-baseline gap-2 mb-2">
-                                                <p className="text-xl font-bold text-emerald-700">
-                                                    LKR {displayPrice.toFixed(2)}
-                                                </p>
-                                                {hasDiscount && (
-                                                    <p className="text-sm text-gray-500 line-through">
-                                                        LKR {originalPrice.toFixed(2)}
-                                                    </p>
-                                                )}
-                                            </div>
+                                            <div className="relative bg-white rounded-xl overflow-hidden">
+                                                {/* Image Container */}
+                                                <div className="relative w-full h-52 overflow-hidden bg-gray-100">
+                                                    {productImage.image ? (
+                                                        <img
+                                                            src={`${BASE_URL}${productImage.image.startsWith('/') ? productImage.image : `/${productImage.image}`}`}
+                                                            alt={productImage.product_name || "Product Image"}
+                                                            className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out"
+                                                            onError={(e) => { e.target.src = "https://via.placeholder.com/300x200?text=No+Image"; }}
+                                                        />
+                                                    ) : (
+                                                        <img
+                                                            src="https://via.placeholder.com/300x200?text=No+Image"
+                                                            alt="No Product Image"
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    )}
 
-                                            <div className="flex items-center text-yellow-400 text-sm">
-                                                <span>4.5</span>
-                                                <span className="ml-1 text-gray-500">(120 reviews)</span>
+                                                    {/* ---------- CREATIVE RIBBON DISCOUNT ---------- */}
+                                                    {hasDiscount && (
+                                                        <div className="absolute top-0 left-0 w-24 h-24 overflow-hidden z-10">
+                                                            <div className="absolute -top-1 -left-1 w-32 rotate-[-45deg] bg-gradient-to-r from-red-500 to-orange-400 text-white text-xs font-bold py-1 text-center shadow-lg transform translate-x-[-25%] translate-y-[25%]">
+                                                                {discountAmountText}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Wishlist Icon */}
+                                                    <button
+                                                        className="absolute top-3 right-3 p-1.5 bg-white/80 backdrop-blur-sm rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-rose-50 hover:text-rose-500 z-20"
+                                                        onClick={() => toast.info('Wishlist feature coming soon!')}
+                                                    >
+                                                        <CiHeart size={20} />
+                                                    </button>
+
+                                                    {/* Quick View - Slides up from bottom */}
+                                                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-3 z-10">
+                                                        <button
+                                                            className="px-4 py-1.5 bg-white/90 text-xs font-semibold text-gray-700 rounded-full shadow-lg hover:bg-emerald-50 hover:text-emerald-600 transition-all transform hover:scale-105"
+                                                            onClick={() => navigate(`/product/${productImage.product_id}`)}
+                                                        >
+                                                            Quick View
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Card Body */}
+                                                <div className="p-4">
+                                                    {productImage.category_name && (
+                                                        <span className="text-xs text-emerald-600 font-medium uppercase tracking-wider">
+                                                            {productImage.category_name}
+                                                        </span>
+                                                    )}
+
+                                                    <h3 className="text-sm font-semibold text-gray-800 mt-1 leading-tight line-clamp-2 group-hover:text-emerald-700 transition-colors">
+                                                        {productImage.product_name || "Untitled Product"}
+                                                    </h3>
+
+                                                    <div className="flex items-baseline gap-2 mt-1">
+                                                        <span className="text-lg font-bold text-emerald-600">
+                                                            LKR {displayPrice.toFixed(2)}
+                                                        </span>
+                                                        {hasDiscount && (
+                                                            <span className="text-sm text-gray-400 line-through">
+                                                                LKR {originalPrice.toFixed(2)}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex items-center text-yellow-400 text-sm mt-1">
+                                                        <span>★★★★★</span>
+                                                        <span className="text-gray-400 ml-1">(4.5)</span>
+                                                    </div>
+
+                                                    <button
+                                                        onClick={() => handleAddToCart(productImage)}
+                                                        disabled={addingToCart[productImage.image_id]}
+                                                        className={`w-full mt-3 py-2 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 ${
+                                                            addingToCart[productImage.image_id]
+                                                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                                                : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm hover:shadow-lg'
+                                                        }`}
+                                                    >
+                                                        {addingToCart[productImage.image_id] ? (
+                                                            <>
+                                                                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                </svg>
+                                                                Adding...
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <CiShoppingCart size={18} />
+                                                                Add to Cart
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -413,19 +555,22 @@ const UserDashboard = () => {
                             })}
                         </div>
                     ) : (
-                        <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 text-center">
-                            <p className="text-xl text-gray-600">No products found for your search and category filters!</p>
+                        // ---------- CREATIVE EMPTY STATE ----------
+                        <div className="bg-white/80 backdrop-blur-sm p-12 rounded-3xl shadow-xl border border-gray-200/60 text-center max-w-2xl mx-auto">
+                            <div className="text-7xl mb-6 animate-bounce">🛍️</div>
+                            <h3 className="text-2xl font-bold text-gray-700 mb-2">No products found</h3>
+                            <p className="text-gray-500 mb-4">Try adjusting your search or category filters</p>
+                            <button
+                                onClick={() => navigate('/')}
+                                className="px-6 py-2 bg-emerald-600 text-white rounded-full hover:bg-emerald-700 transition shadow-md"
+                            >
+                                Browse All Products
+                            </button>
                             {(currentSearchTerm || currentCategory) && (
-                                <div className="mt-4 space-y-2">
-                                    {currentSearchTerm && (
-                                        <p className="text-md text-gray-500">
-                                            Search term: <span className="font-semibold text-emerald-600">"{currentSearchTerm}"</span>
-                                        </p>
-                                    )}
+                                <div className="mt-4 text-sm text-gray-400">
+                                    {currentSearchTerm && <span>Search: "{currentSearchTerm}"</span>}
                                     {currentCategory && currentCategory !== "All Categories" && (
-                                        <p className="text-md text-gray-500">
-                                            Category: <span className="font-semibold text-amber-600">"{currentCategory}"</span>
-                                        </p>
+                                        <span className="ml-2">Category: {currentCategory}</span>
                                     )}
                                 </div>
                             )}
@@ -433,6 +578,7 @@ const UserDashboard = () => {
                     )}
                 </div>
 
+                {/* ---------- CART POPUP (unchanged) ---------- */}
                 {showCart && cartItems.length > 0 && (
                     <div
                         ref={cartRef}
@@ -564,10 +710,11 @@ const UserDashboard = () => {
                     </div>
                 )}
 
+                {/* ---------- CREATIVE FLOATING CART BUTTON ---------- */}
                 {!showCart && cartItems.length > 0 && (
                     <button
                         onClick={() => setShowCart(true)}
-                        className="fixed bottom-6 right-6 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white p-4 rounded-full shadow-2xl hover:shadow-xl transition z-40 flex items-center gap-2 group"
+                        className="fixed bottom-6 right-6 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white p-4 rounded-full shadow-2xl hover:shadow-xl transition z-40 flex items-center gap-2 group animate-pulse-slow"
                     >
                         <div className="relative">
                             <CiShoppingCart size={28} />
@@ -580,34 +727,71 @@ const UserDashboard = () => {
                 )}
             </div>
 
-            {/* <style jsx>{`
-                @keyframes slideIn {
-                    from {
-                        opacity: 0;
-                        transform: translateX(20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateX(0);
-                    }
+            {/* ---------- CUSTOM ANIMATIONS ---------- */}
+            <style jsx>{`
+                @keyframes blob {
+                    0%, 100% { transform: translate(0px, 0px) scale(1); }
+                    33% { transform: translate(30px, -50px) scale(1.1); }
+                    66% { transform: translate(-20px, 20px) scale(0.9); }
                 }
-                @keyframes slideUp {
+                .animate-blob {
+                    animation: blob 7s infinite;
+                }
+                .animation-delay-2000 {
+                    animation-delay: 2s;
+                }
+                .animation-delay-4000 {
+                    animation-delay: 4s;
+                }
+
+                @keyframes fade-up {
                     from {
                         opacity: 0;
-                        transform: translateY(30px);
+                        transform: translateY(20px);
                     }
                     to {
                         opacity: 1;
                         transform: translateY(0);
                     }
                 }
+                .animate-fade-up {
+                    animation: fade-up 0.6s ease-out both;
+                }
+
+                @keyframes rotate-border {
+                    0% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+                .animate-rotate-border {
+                    background-size: 200% 200%;
+                    animation: rotate-border 2s linear infinite;
+                }
+
+                @keyframes float {
+                    0%, 100% { transform: translateY(0px) rotate(0deg); }
+                    50% { transform: translateY(-20px) rotate(180deg); }
+                }
+                .animate-float {
+                    animation: float 20s ease-in-out infinite;
+                }
+
+                @keyframes pulse-slow {
+                    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+                    50% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
+                }
+                .animate-pulse-slow {
+                    animation: pulse-slow 2s ease-in-out infinite;
+                }
+
+                @keyframes slideIn {
+                    from { opacity: 0; transform: translateX(20px); }
+                    to { opacity: 1; transform: translateX(0); }
+                }
                 .animate-slideIn {
                     animation: slideIn 0.3s ease-out;
                 }
-                .animate-slideUp {
-                    animation: slideUp 0.4s ease-out;
-                }
-            `}</style> */}
+            `}</style>
         </>
     );
 };

@@ -366,3 +366,27 @@ export const adminRemark = {
     processRefund: (refundDetails) => httpRequest.post('/admin/refunds', refundDetails),
     updateTrackingNumber: (orderId, trackingNo) => httpRequest.put(`/admin/tracking/${orderId}`, { tracking_no: trackingNo }),
 };
+
+export const sellerBusinessDetailApi = {
+    create: (sellerBusinessDetail) => httpRequest.post('/sellerBusinessDetail/create', sellerBusinessDetail),
+    getAll: () => httpRequest.get('/sellerBusinessDetail/all'),
+    getById: (id) => httpRequest.get(`/sellerBusinessDetail/${id}`),
+    getBySellerId: (sellerId) => httpRequest.get(`/sellerBusinessDetail/seller/${sellerId}`),
+    update: (id, sellerBusinessDetail) => httpRequest.put(`/sellerBusinessDetail/${id}`, sellerBusinessDetail),
+    updateBySellerId: (sellerId, sellerBusinessDetail) => httpRequest.put(`/sellerBusinessDetail/seller/${sellerId}`, sellerBusinessDetail),
+    updateLogo: (sellerId, logoPath) => httpRequest.patch(`/sellerBusinessDetail/seller/${sellerId}/logo`, { logoPath }),
+    updateBanner: (sellerId, bannerPath) => httpRequest.patch(`/sellerBusinessDetail/seller/${sellerId}/banner`, { bannerPath }),
+    delete: (id) => httpRequest.delete(`/sellerBusinessDetail/${id}`),
+    deleteBySellerId: (sellerId) => httpRequest.delete(`/sellerBusinessDetail/seller/${sellerId}`),
+};
+
+export const feedbackApi = {
+    createFeedback: (feedbackData) => httpRequest.post('/feedback/create', feedbackData),
+    getAllFeedback: () => httpRequest.get('/feedback/all'),
+    getFeedbackById: (id) => httpRequest.get(`/feedback/${id}`),
+    getFeedbackByOrderId: (orderId) => httpRequest.get(`/feedback/order/${orderId}`),
+    getFeedbackByReturnOrderId: (returnOrderId) => httpRequest.get(`/feedback/return/${returnOrderId}`),
+    updateFeedbackStatus: (id, status) => httpRequest.put(`/feedback/status/${id}`, { status }),
+    updateFeedback: (id, feedbackData) => httpRequest.put(`/feedback/${id}`, feedbackData),
+    deleteFeedback: (id) => httpRequest.delete(`/feedback/${id}`),
+};

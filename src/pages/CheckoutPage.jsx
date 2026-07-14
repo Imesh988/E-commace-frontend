@@ -855,7 +855,7 @@ const CheckoutPage = () => {
         <div className="relative z-10">
                <Navbar />
 
-            <div className="max-w-[1550px] mx-auto px-4 sm:px-6 lg:px-10 pt-10">
+            <div className="max-w-[1950px] mx-auto px-4 sm:px-6 lg:px-10 pt-10">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     <div className="lg:col-span-8 space-y-6">
                         <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-100 p-8">
@@ -991,65 +991,87 @@ const CheckoutPage = () => {
                         </div>
                     </div>
 
-                    <div className="lg:col-span-4">
-                        <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-lg border border-gray-100 p-8 sticky top-24 overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-1.5 " />
-                            <h2 className="text-xl font-black mb-8 tracking-tight uppercase">Bill Details</h2>
+                   <div className="lg:col-span-4">
+    <div className="bg-zinc-950 rounded-[30px] shadow-2xl border border-zinc-800 p-8 sticky top-24 overflow-hidden">
+        {/* Top Accent Line */}
+        <div className="absolute top-0 left-0 w-full h-2 " />
+        
+        <h2 className="text-xl font-black mb-8 tracking-widest uppercase text-white flex items-center gap-2">
+            <span className="w-2 h-6 bg-emerald-500 rounded-full inline-block"></span>
+            Bill Details
+        </h2>
 
-                            <div className="relative mb-8">
-                                <input
-                                    type="text"
-                                    placeholder="Promo Code"
-                                    value={couponCode}
-                                    onChange={(e) => setCouponCode(e.target.value)}
-                                    className="w-full bg-white border border-gray-100 rounded-xl px-5 py-4 focus:ring-1 focus:ring-emerald-500 text-gray-800 font-bold placeholder:text-gray-300 transition-all outline-none"
-                                />
-                                <button className="absolute right-2 top-2 bottom-2 bg-gray-900 text-white px-5 rounded-lg text-[10px] font-black uppercase hover:bg-black transition-colors tracking-widest">
-                                    Apply
-                                </button>
-                            </div>
+        {/* Promo Code - Black & Green Style */}
+        <div className="relative mb-8">
+            <input
+                type="text"
+                placeholder="PROMO CODE"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl px-5 py-4 focus:border-emerald-500 text-white font-bold placeholder:text-zinc-600 transition-all outline-none"
+            />
+            <button className="absolute right-2 top-2 bottom-2 bg-emerald-500 text-black px-6 rounded-xl text-[11px] font-black uppercase hover:bg-emerald-400 transition-colors tracking-widest">
+                Apply
+            </button>
+        </div>
 
-                            <div className="space-y-4 mb-8">
-                                <div className="flex justify-between text-gray-500 font-bold text-sm">
-                                    <span>Subtotal ({totalQuantity} items)</span>
-                                    <span className="text-gray-900">LKR {subtotal.toFixed(2)}</span>
-                                </div>
-                                {discountAmount > 0 && (
-                                    <div className="flex justify-between text-rose-500 font-bold text-sm">
-                                        <span>Discount</span>
-                                        <span>- LKR {discountAmount.toFixed(2)}</span>
-                                    </div>
-                                )}
-                                <div className="flex justify-between items-center text-gray-500 font-bold text-sm">
-                                    <span>Shipping</span>
-                                    <span className="text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded text-[10px] font-black">FREE</span>
-                                </div>
-                            </div>
+        {/* Price Breakdown */}
+        <div className="space-y-4 mb-8">
+            <div className="flex justify-between text-zinc-400 font-bold text-sm">
+                <span>Subtotal ({totalQuantity} items)</span>
+                <span className="text-white">LKR {subtotal.toFixed(2)}</span>
+            </div>
+            {discountAmount > 0 && (
+                <div className="flex justify-between text-emerald-400 font-bold text-sm">
+                    <span>Discount</span>
+                    <span>- LKR {discountAmount.toFixed(2)}</span>
+                </div>
+            )}
+            <div className="flex justify-between items-center text-zinc-400 font-bold text-sm">
+                <span>Shipping</span>
+                <span className="text-black bg-emerald-500 px-3 py-1 rounded-full text-[10px] font-black">FREE</span>
+            </div>
+        </div>
 
-                            <div className="pt-6 border-t-2 border-dashed border-gray-100 mb-8">
-                                <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mb-1">Total Payable</p>
-                                <p className="text-3xl font-black text-emerald-600 tracking-tighter">LKR {finalAmount.toLocaleString()}</p>
-                            </div>
+        {/* Total Section */}
+        <div className="pt-6 border-t border-zinc-800 mb-8">
+            <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em] mb-2">Total Payable</p>
+            <div className="flex items-baseline gap-1">
+                <span className="text-emerald-500 text-sm font-black tracking-tight">LKR</span>
+                <p className="text-4xl font-black text-white tracking-tighter">{finalAmount.toLocaleString()}</p>
+            </div>
+        </div>
 
-                            <button
-                                onClick={handlePlaceOrder}
-                                disabled={processingOrder || paymentLoading || !selectedAddress || !paymentMethod}
-                                className="w-full bg-emerald-500 text-white py-5 rounded-2xl text-lg font-black hover:bg-emerald-600 transition-all shadow-xl shadow-emerald-500/20 disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-3 uppercase tracking-wider"
-                            >
-                                {processingOrder ? 'Processing...' : (paymentMethod === 'card' ? 'Pay Now' : 'Place Order')}
-                            </button>
+        {/* Primary Action Button */}
+        <button
+            onClick={handlePlaceOrder}
+            disabled={processingOrder || paymentLoading || !selectedAddress || !paymentMethod}
+            className="w-full bg-emerald-500 text-black py-5 rounded-2xl text-lg font-black hover:bg-emerald-400 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-emerald-500/10 disabled:opacity-30 disabled:grayscale disabled:scale-100 flex items-center justify-center gap-3 uppercase tracking-widest"
+        >
+            {processingOrder ? (
+                <div className="w-6 h-6 border-4 border-black/30 border-t-black rounded-full animate-spin" />
+            ) : (
+                <>
+                    {paymentMethod === 'card' ? 'Pay Now' : 'Place Order'}
+                </>
+            )}
+        </button>
 
-                            <div className="mt-8 pt-6 border-t border-gray-50 flex flex-col gap-3">
-                                <div className="flex items-center gap-3 text-[11px] text-gray-400 font-bold uppercase tracking-widest">
-                                    <IoShieldCheckmark size={18} className="text-emerald-500" />
-                                    100% Secure Checkout
-                                </div>
-                                <p className="text-[10px] text-gray-400 leading-relaxed">
-                                    By placing your order, you agree to ShopEase <a href="#" className="underline">Terms</a>.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+        {/* Footer Security Section */}
+        <div className="mt-8 pt-6 border-t border-zinc-900 flex flex-col gap-4">
+            <div className="flex items-center gap-3 text-[10px] text-zinc-500 font-black uppercase tracking-widest">
+                <div className="bg-emerald-500/10 p-2 rounded-lg">
+                    <IoShieldCheckmark size={18} className="text-emerald-500" />
+                </div>
+                100% Encrypted & Secure
+            </div>
+            <p className="text-[10px] text-zinc-600 leading-relaxed font-medium">
+                By placing your order, you agree to ShopEase 
+                <a href="#" className="text-emerald-500 hover:underline ml-1">Terms & Conditions</a>.
+            </p>
+        </div>
+    </div>
+</div>
                 </div>
             </div>
         </div>

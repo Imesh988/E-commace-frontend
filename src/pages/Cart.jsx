@@ -1,17 +1,11 @@
-// --- START OF FILE Paste March 17, 2026 - 1:55PM ---
-
 import React, { useEffect, useState } from 'react';
-import { FiTrash2, FiPlus, FiMinus, FiShoppingBag, FiHeart } from 'react-icons/fi';
-import { IoFlashOutline, IoTimerOutline } from 'react-icons/io5';
-import { MdLocalShipping, MdVerified, MdSecurity } from 'react-icons/md';
-import { RiMoneyDollarCircleLine } from 'react-icons/ri';
+import { FiTrash2, FiPlus, FiMinus, FiShoppingBag, FiArrowLeft, FiShield, FiTruck } from 'react-icons/fi';
+import { IoFlashOutline, IoTimerOutline, IoBagCheckOutline } from 'react-icons/io5';
+import { MdVerified, MdOutlinePayments } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
-import AfterNavbar from '../layout/SellerNavbar';
 import { CartApi } from '../services/api';
 import { toast } from 'react-toastify';
 import Navbar from '../layout/Navbar';
-
-
 
 const BASE_URL = "http://localhost:5000";
 
@@ -28,7 +22,6 @@ const CartPage = () => {
     }, []);
 
     useEffect(() => {
-        // Initialize selected items when cart loads
         const initialSelected = {};
         cartItems.forEach(item => {
             initialSelected[item.cart_id] = true;
@@ -38,22 +31,18 @@ const CartPage = () => {
 
     const fetchCartItems = async () => {
         setLoading(true);
-        const token = localStorage.getItem('token'); // Get the token here
-
+        const token = localStorage.getItem('token');
         try {
             if (token) {
-                // User is logged in, fetch from API
                 const response = await CartApi.getCartItems();
                 setCartItems(response.data.data || []);
             } else {
-                // User is a guest, load from localStorage
                 const savedGuestCart = localStorage.getItem('guestCart');
                 setCartItems(savedGuestCart ? JSON.parse(savedGuestCart) : []);
             }
         } catch (error) {
-            console.error('Error fetching cart:', error);
             toast.error('Failed to load cart');
-            setCartItems([]); // Ensure cart is empty on error
+            setCartItems([]);
         } finally {
             setLoading(false);
         }
@@ -61,20 +50,15 @@ const CartPage = () => {
 
     const handleQuantityChange = async (item, newQty) => {
         if (newQty < 1) return;
-
-        const token = localStorage.getItem('token'); // Check token here too
-        
+        const token = localStorage.getItem('token');
         try {
             setUpdating(prev => ({ ...prev, [item.cart_id]: true }));
-            
             const newTotal = parseFloat(item.final_price) * newQty;
-            
+
             if (token) {
                 await CartApi.updateCartItem(item.cart_id, { qty: newQty, totalAmount: newTotal });
-                // Re-fetch to ensure consistency with backend
-                await fetchCartItems(); 
+                await fetchCartItems();
             } else {
-                // Update guest cart in state and localStorage
                 const updatedGuestCart = cartItems.map(cartItem =>
                     cartItem.cart_id === item.cart_id
                         ? { ...cartItem, qty: newQty, total_amount: newTotal }
@@ -83,53 +67,42 @@ const CartPage = () => {
                 setCartItems(updatedGuestCart);
                 localStorage.setItem('guestCart', JSON.stringify(updatedGuestCart));
             }
-
         } catch (error) {
-            console.error('Error updating cart:', error);
-            toast.error('Failed to update cart');
+            toast.error('Update failed');
         } finally {
             setUpdating(prev => ({ ...prev, [item.cart_id]: false }));
         }
     };
 
     const handleRemoveItem = async (cartId) => {
-        const token = localStorage.getItem('token'); // Check token here too
-
+        const token = localStorage.getItem('token');
         try {
             if (token) {
                 await CartApi.removeCartItem(cartId);
-                // Re-fetch to ensure consistency with backend
                 await fetchCartItems();
             } else {
-                // Update guest cart in state and localStorage
                 const updatedGuestCart = cartItems.filter(item => item.cart_id !== cartId);
                 setCartItems(updatedGuestCart);
                 localStorage.setItem('guestCart', JSON.stringify(updatedGuestCart));
             }
             toast.success('Item removed');
         } catch (error) {
-            console.error('Error removing item:', error);
-            toast.error('Failed to remove item');
+            toast.error('Removal failed');
         }
     };
 
     const handleSelectItem = (cartId) => {
-        setSelectedItems(prev => ({
-            ...prev,
-            [cartId]: !prev[cartId]
-        }));
-        
-        // Update select all status
-        const allSelected = cartItems.every(item => 
-            item.cart_id === cartId ? !prev[cartId] : prev[item.cart_id]
-        );
-        setSelectAll(allSelected);
+        setSelectedItems(prev => {
+            const newState = { ...prev, [cartId]: !prev[cartId] };
+            const allSelected = cartItems.every(item => newState[item.cart_id]);
+            setSelectAll(allSelected);
+            return newState;
+        });
     };
 
     const handleSelectAll = () => {
         const newSelectAll = !selectAll;
         setSelectAll(newSelectAll);
-        
         const newSelected = {};
         cartItems.forEach(item => {
             newSelected[item.cart_id] = newSelectAll;
@@ -146,387 +119,267 @@ const CartPage = () => {
 
     const selectedCount = cartItems.filter(item => selectedItems[item.cart_id]).length;
 
-    const handleContinueShopping = () => {
-        navigate('/');
-    };
-
     if (loading) {
         return (
-            <>
-                
-                <div className="relative min-h-screen bg-gradient-to-br from-emerald-50 to-yellow-50 font-sans overflow-hidden">
-                    <div className="absolute top-0 left-0 w-80 h-80 bg-emerald-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>
-                    <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000 z-0"></div>
-                    <div className="absolute bottom-0 right-0 w-72 h-72 bg-emerald-100 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000 z-0"></div>
-                    <div className="absolute bottom-1/4 right-1/2 w-64 h-64 bg-yellow-100 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>
-                    
-                    <div className="relative z-10 min-h-screen flex items-center justify-center">
-                        <div className="text-center bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl">
-                            <div className="animate-spin rounded-full h-16 w-16 border-4 border-emerald-600 border-t-transparent mx-auto mb-4"></div>
-                            <p className="text-gray-600">Loading your cart...</p>
-                        </div>
-                    </div>
-                </div>
-            </>
+            <div className="h-screen w-full flex items-center justify-center bg-[#f8fafc]">
+                <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+            </div>
         );
     }
 
     return (
-        <>
-            
-           
-            {/* User Dashboard Style Background */}
-            <div className="relative min-h-screen bg-gradient-to-br from-emerald-50 to-yellow-50 font-sans overflow-hidden">
-                {/* Animated Blobs */}
-                <div className="absolute top-0 left-0 w-90 h-80 bg-emerald-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>
-                <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000 z-0"></div>
-                <div className="absolute bottom-0 right-0 w-72 h-72 bg-emerald-100 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000 z-0"></div>
-                <div className="absolute bottom-1/4 right-1/2 w-64 h-64 bg-yellow-100 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob z-0"></div>
-                 <Navbar />
-                {/* Main Content */}
-                <div className="relative z-10 max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                    {/* Header with breadcrumb - Styled like dashboard */}
-                    <div className="mb-6 relative z-10">
-                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                            <span 
-                                className="hover:text-emerald-600 cursor-pointer transition-colors" 
-                                onClick={handleContinueShopping}
-                            >
-                                Home
-                            </span>
-                            <span>/</span>
-                            <span className="text-emerald-700 font-medium">Shopping Cart</span>
-                        </div>
-                        
-                        <div className="relative">
-                            <div className="absolute -top-10 -left-10 w-48 h-48 bg-emerald-100 rounded-full mix-blend-multiply filter blur-xl opacity-30 z-0"></div>
-                            <h1 className="relative z-10 text-3xl font-bold text-gray-800 flex items-center gap-3 bg-white/60 backdrop-blur-sm p-4 rounded-xl shadow-sm border border-emerald-100">
-                                <FiShoppingBag className="text-emerald-600" />
-                                My Cart
-                                {cartItems.length > 0 && (
-                                    <span className="text-sm font-normal text-gray-500 ml-2 bg-white px-3 py-1 rounded-full">
-                                        {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}
-                                    </span>
-                                )}
-                            </h1>
-                        </div>
+            <div className="bg-[#f4fbf6] min-h-screen pb-20 relative overflow-hidden">
+        <div className="fixed inset-0 z-0 pointer-events-none">
+            <div className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-emerald-200/30 rounded-full blur-[120px]"></div>
+            <div className="absolute bottom-[5%] right-[-5%] w-[600px] h-[600px] bg-yellow-200/20 rounded-full blur-[130px]"></div>
+            <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-emerald-100/40 rounded-full blur-[100px]"></div>
+            <div className="absolute bottom-[-10%] left-[10%] w-[500px] h-[500px] bg-yellow-100/30 rounded-full blur-[110px]"></div>
+        </div>
+            <Navbar />
+
+            {/* Main Content Area */}
+            <main className="relative z-10 w-full px-4 sm:px-8 lg:px-12 xl:px-20 py-8">
+                
+                {/* Upper Section */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                    <div>
+                        <button 
+                            onClick={() => navigate('/')}
+                            className="group flex items-center text-xs font-bold text-emerald-600 mb-1 hover:text-emerald-700 transition-all"
+                        >
+                            <FiArrowLeft className="mr-1.5" /> Back to Dashboard
+                        </button>
+
                     </div>
 
-                    {cartItems.length === 0 ? (
-                        <div className="relative z-10 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-emerald-100 p-12 text-center">
-                            <div className="absolute -top-10 -left-1- w-48 h-48 bg-emerald-100 rounded-full mix-blend-multiply filter blur-xl opacity-50 z-0"></div>
-                            <div className="absolute bottom-0 right-0 w-64 h-64 bg-yellow-100 rounded-full mix-blend-multiply filter blur-xl opacity-50 z-0"></div>
-                            
-                            <div className="relative z-10">
-                                <div className="w-24 h-24 bg-gradient-to-br from-emerald-100 to-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <FiShoppingBag className="text-4xl text-emerald-600" />
-                                </div>
-                                <h2 className="text-xl font-semibold text-gray-800 mb-2">Your cart is empty</h2>
-                                <p className="text-gray-600 mb-6">Looks like you haven't added anything to your cart yet</p>
-                                <button 
-                                    onClick={handleContinueShopping}
-                                    className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-xl font-medium hover:shadow-lg hover:scale-105 transition-all duration-300 shadow-md"
-                                >
-                                    Continue Shopping
-                                </button>
+                    {cartItems.length > 0 && (
+                        <div className="bg-white/80 backdrop-blur-xl border border-white/50 p-3 px-5 rounded-[20px] shadow-lg shadow-emerald-900/5 flex items-center gap-4">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Items</span>
+                                <span className="text-base font-extrabold text-slate-800">{cartItems.length}</span>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            {/* Left Column - Cart Items */}
-                            <div className="lg:col-span-2 space-y-4">
-                                {/* Lightning Deal Banner - Styled */}
-                                <div className="relative z-10 bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 rounded-xl shadow-lg overflow-hidden">
-                                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/20 rounded-full blur-xl"></div>
-                                    <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/20 rounded-full blur-xl"></div>
-                                    <div className="relative flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <IoFlashOutline className="text-2xl" />
-                                            <div>
-                                                <h3 className="font-bold">Lightning Deals</h3>
-                                                <p className="text-sm opacity-90">Limited time offers. Grab them fast!</p>
-                                            </div>
-                                        </div>
-                                        {/* <div className="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
-                                            <IoTimerOutline />
-                                            <span className="text-sm font-medium">02:15:30</span>
-                                        </div> */}
-                                    </div>
-                                </div>
-
-                                {/* Select All Bar - Styled */}
-                                <div className="relative z-10 bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md border border-emerald-100 flex items-center justify-between">
-                                    <label className="flex items-center gap-3">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={selectAll}
-                                            onChange={handleSelectAll}
-                                            className="w-5 h-5 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
-                                        />
-                                        <span className="text-gray-700">Select all ({cartItems.length} items)</span>
-                                    </label>
-                                    <button className="text-sm text-red-500 hover:text-red-600 font-medium transition-colors">
-                                        Delete selected
-                                    </button>
-                                </div>
-
-                                {/* Cart Items */}
-                                {cartItems.map((item) => (
-                                    <div key={item.cart_id} className="relative z-10 bg-white/80 backdrop-blur-sm rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-4 border border-emerald-100">
-                                        <div className="flex gap-4">
-                                            {/* Checkbox */}
-                                            <div className="pt-2">
-                                                <input 
-                                                    type="checkbox" 
-                                                    checked={selectedItems[item.cart_id] || false}
-                                                    onChange={() => handleSelectItem(item.cart_id)}
-                                                    className="w-5 h-5 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
-                                                />
-                                            </div>
-
-                                            {/* Product Image */}
-                                            <div className="relative w-24 h-24 bg-gradient-to-br from-emerald-50 to-yellow-50 rounded-lg overflow-hidden flex-shrink-0 border border-emerald-200 shadow-sm">
-                                                {item.image ? (
-                                                    <img
-                                                        src={`${BASE_URL}${item.image.startsWith('/') ? item.image : `/${item.image}`}`}
-                                                        alt={item.product_name}
-                                                        className="w-full h-full object-cover"
-                                                        onError={(e) => {
-                                                            e.target.src = "https://via.placeholder.com/100?text=No+Image";
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-400">
-                                                        No image
-                                                    </div>
-                                                )}
-                                                {/* Lightning Deal Badge */}
-                                                {Math.random() > 0.5 && (
-                                                    <div className="absolute top-1 left-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-md">
-                                                        <IoFlashOutline size={12} />
-                                                        <span>Deal</span>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Product Details */}
-                                            <div className="flex-1">
-                                                <div className="flex justify-between">
-                                                    <h3 className="font-medium text-gray-800 hover:text-emerald-600 cursor-pointer line-clamp-2 flex-1">
-                                                        {item.product_name}
-                                                    </h3>
-                                                    <button 
-                                                        onClick={() => handleRemoveItem(item.cart_id)}
-                                                        className="text-gray-400 hover:text-red-500 ml-2 transition-colors"
-                                                        title="Remove"
-                                                    >
-                                                        <FiTrash2 size={18} />
-                                                    </button>
-                                                </div>
-                                                
-                                                {/* Price Section */}
-                                                <div className="mt-2">
-                                                    <div className="flex items-baseline gap-2">
-                                                        <p className="text-xl font-bold text-emerald-600">
-                                                            LKR {parseFloat(item.final_price).toFixed(2)}
-                                                        </p>
-                                                        {item.discount_status === 1 && (
-                                                            <p className="text-sm text-gray-400 line-through">
-                                                                LKR {parseFloat(item.price).toFixed(2)}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                    {item.discount_status === 1 && (
-                                                        <p className="text-xs text-orange-500 font-medium mt-1">
-                                                            You save: LKR {(parseFloat(item.price) - parseFloat(item.final_price)).toFixed(2)}
-                                                        </p>
-                                                    )}
-                                                </div>
-
-                                                {/* Free Shipping Tag */}
-                                                {/* <div className="flex items-center gap-1 text-xs text-gray-500 mt-2">
-                                                    <MdLocalShipping className="text-emerald-600" />
-                                                    <span>Free shipping</span>
-                                                    <span className="mx-2">•</span>
-                                                    <span className="text-emerald-600">In stock</span>
-                                                </div> */}
-
-                                                {/* Quantity Controls */}
-                                                <div className="flex items-center justify-between mt-3">
-                                                    <div className="flex items-center border border-emerald-200 rounded-lg bg-white">
-                                                        <button
-                                                            onClick={() => handleQuantityChange(item, item.qty - 1)}
-                                                            disabled={updating[item.cart_id] || item.qty <= 1}
-                                                            className="w-10 h-10 flex items-center justify-center text-lg hover:bg-emerald-50 disabled:opacity-30 rounded-l-lg transition-colors"
-                                                        >
-                                                            <FiMinus size={16} />
-                                                        </button>
-                                                        
-                                                        <span className="w-12 text-center font-medium">
-                                                            {updating[item.cart_id] ? (
-                                                                <div className="animate-spin h-4 w-4 border-2 border-emerald-600 border-t-transparent rounded-full mx-auto"></div>
-                                                            ) : (
-                                                                item.qty
-                                                            )}
-                                                        </span>
-                                                        
-                                                        <button
-                                                            onClick={() => handleQuantityChange(item, item.qty + 1)}
-                                                            disabled={updating[item.cart_id]}
-                                                            className="w-10 h-10 flex items-center justify-center text-lg hover:bg-emerald-50 disabled:opacity-30 rounded-r-lg transition-colors"
-                                                        >
-                                                            <FiPlus size={16} />
-                                                        </button>
-                                                    </div>
-
-                                                    {/* <button className="text-gray-400 hover:text-red-500 flex items-center gap-1 text-sm transition-colors">
-                                                        <FiHeart size={16} />
-                                                        <span className="hidden sm:inline">Save for later</span>
-                                                    </button> */}
-                                                </div>
-                                            </div>
-
-                                            {/* Item Total - Desktop */}
-                                            <div className="hidden md:block text-right min-w-[100px]">
-                                                <p className="text-sm text-gray-500 mb-1">Item Total</p>
-                                                <p className="font-bold text-lg text-emerald-600">
-                                                    LKR {parseFloat(item.total_amount).toFixed(2)}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        
-                                        {/* Item Total - Mobile */}
-                                        <div className="md:hidden mt-3 pt-3 border-t border-emerald-100 flex justify-between items-center">
-                                            <p className="text-sm text-gray-500">Item Total</p>
-                                            <p className="font-bold text-lg text-emerald-600">
-                                                LKR {parseFloat(item.total_amount).toFixed(2)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {/* Continue Shopping Link */}
-                                <div className="flex justify-center pt-4">
-                                    <button 
-                                        onClick={handleContinueShopping}
-                                        className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-2 transition-colors bg-white/60 backdrop-blur-sm px-100 py-2 rounded-full shadow-sm hover:shadow-md"
-                                    >
-                                        <span>←</span> Continue Shopping
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Right Column - Order Summary */}
-                            <div className="lg:col-span-1">
-                                <div className="relative z-10 bg-white/80 backdrop-blur-sm rounded-xl shadow-xl p-6 sticky top-24 border border-emerald-100">
-                                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-100 rounded-full mix-blend-multiply filter blur-xl opacity-50"></div>
-                                    <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-yellow-100 rounded-full mix-blend-multiply filter blur-xl opacity-50"></div>
-                                    
-                                    <div className="relative z-10">
-                                        <h2 className="text-lg font-bold text-gray-800 mb-4">Order Summary</h2>
-                                        
-                                        {/* Free Shipping Banner */}
-                                        {/* <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-3 rounded-lg mb-4 flex items-center gap-2 border border-blue-200">
-                                            <MdLocalShipping className="text-blue-600 text-xl" />
-                                            <div>
-                                                <p className="text-sm font-medium text-blue-600">Free Shipping</p>
-                                                <p className="text-xs text-blue-500">For orders over LKR 5,000</p>
-                                            </div>
-                                        </div> */}
-
-                                        {/* Price Breakdown */}
-                                        <div className="space-y-3 text-sm mb-4">
-                                            <div className="flex justify-between">
-                                                <span className="text-gray-600">Subtotal ({selectedCount} items)</span>
-                                                <span className="font-medium">LKR {calculateSelectedSubtotal()}</span>
-                                            </div>
-                                           
-                                            {/* <div className="flex justify-between">
-                                                <span className="text-gray-600">Estimated Tax</span>
-                                                <span className="font-medium">LKR 0.00</span>
-                                            </div> */}
-                                            <div className="border-t border-emerald-200 pt-3 mt-3">
-                                                <div className="flex justify-between font-bold text-lg">
-                                                    <span>Total</span>
-                                                    <span className="text-emerald-600">LKR {calculateSelectedSubtotal()}</span>
-                                                </div>
-                                                <p className="text-xs text-gray-500 mt-1">Inclusive of all taxes</p>
-                                            </div>
-                                        </div>
-
-                                        {/* Almost Sold Out Warning */}
-                                        {selectedCount > 0 && (
-                                            <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-3 rounded-lg mb-4 flex items-center gap-2 border border-orange-200">
-                                                <IoFlashOutline className="text-orange-600 text-xl" />
-                                                <p className="text-sm text-orange-600">
-                                                    <span className="font-bold">Almost sold out!</span> Complete your purchase soon.
-                                                </p>
-                                            </div>
-                                        )}
-
-                                        {/* Checkout Button */}
-                                        <button 
-                                            disabled={selectedCount === 0}
-                                            className={`w-full py-3 rounded-xl text-sm font-bold transition-all duration-300 shadow-lg mb-3 ${
-                                                selectedCount > 0 
-                                                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:shadow-xl hover:scale-105' 
-                                                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                                            }`}
-                                        >
-                                            Proceed to Checkout {selectedCount > 0 && `(${selectedCount})`}
-                                        </button>
-
-                                        {/* Payment Icons */}
-                                        <div className="flex items-center justify-center gap-4 text-gray-400 text-2xl mt-4">
-                                            <RiMoneyDollarCircleLine className="hover:text-emerald-600 transition-colors" />
-                                            <MdSecurity className="hover:text-emerald-600 transition-colors" />
-                                            <MdVerified className="hover:text-emerald-600 transition-colors" />
-                                        </div>
-                                        <p className="text-xs text-center text-gray-500 mt-2">
-                                            Secure payment • 30-day returns
-                                        </p>
-
-                                        {/* Coupon Section */}
-                                        {/* <div className="mt-4 pt-4 border-t border-emerald-200">
-                                            <p className="text-sm font-medium text-gray-700 mb-2">Have a coupon?</p>
-                                            <div className="flex gap-2">
-                                                <input 
-                                                    type="text" 
-                                                    placeholder="Enter code"
-                                                    className="flex-1 px-3 py-2 border border-emerald-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white/50"
-                                                />
-                                                <button className="px-4 py-2 bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-700 rounded-lg text-sm font-medium hover:from-emerald-200 hover:to-emerald-100 transition-all">
-                                                    Apply
-                                                </button>
-                                            </div>
-                                        </div> */}
-                                    </div>
-                                </div>
+                            <div className="h-8 w-[1px] bg-slate-150"></div>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Subtotal</span>
+                                <span className="text-base font-extrabold text-emerald-600">LKR {calculateSelectedSubtotal()}</span>
                             </div>
                         </div>
                     )}
                 </div>
-            </div>
 
-            {/* Animation Styles */}
+                {cartItems.length === 0 ? (
+                    <div className="w-full flex flex-col items-center justify-center py-24 bg-white/40 backdrop-blur-md rounded-[40px] border border-white">
+                        <FiShoppingBag className="text-7xl text-emerald-200 mb-4 animate-bounce" />
+                        <h2 className="text-xl font-bold text-slate-700">Your bag is empty</h2>
+                        <button onClick={() => navigate('/')} className="mt-4 px-6 py-2.5 bg-emerald-600 text-white rounded-full font-bold shadow-lg text-sm">Start Shopping</button>
+                    </div>
+                ) : (
+                    <div className="flex flex-col xl:flex-row gap-6">
+                        
+                        {/* Left Side: Items List (More compact cards) */}
+                        <div className="flex-1 space-y-3">
+                            {/* Select All Bar */}
+                            <div className="w-full bg-white/60 backdrop-blur-md border border-white rounded-[20px] p-3 px-4 flex items-center justify-between">
+                                <label className="flex items-center gap-2.5 cursor-pointer ml-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectAll}
+                                        onChange={handleSelectAll}
+                                        className="w-4.5 h-4.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                                    />
+                                    <span className="font-bold text-sm text-slate-700">Select All ({cartItems.length})</span>
+                                </label>
+                                <div className="flex items-center gap-1.5 text-orange-500 bg-orange-50/60 px-3 py-1 rounded-full">
+                                    <IoTimerOutline className="animate-spin-slow text-sm" />
+                                    <span className="text-[10px] font-bold uppercase tracking-tighter">Offers end soon!</span>
+                                </div>
+                            </div>
+
+                            {/* Items Container */}
+                            <div className="grid grid-cols-1 gap-3">
+                                {cartItems.map((item) => (
+                                    <div
+                                        key={item.cart_id}
+                                        className="w-full bg-white/80 backdrop-blur-md border border-white rounded-[24px] p-4 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 hover:shadow-lg transition-all duration-300 group"
+                                    >
+                                        <div className="flex items-center gap-3 w-full sm:w-auto">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedItems[item.cart_id] || false}
+                                                onChange={() => handleSelectItem(item.cart_id)}
+                                                className="w-5 h-5 rounded-full border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                                            />
+
+                                            {/* Compact Image Box */}
+                                            <div className="relative w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0 ml-1">
+                                                <div className="absolute inset-0 bg-emerald-50 rounded-[20px] rotate-3 group-hover:rotate-6 transition-transform duration-300"></div>
+                                                <img
+                                                    src={`${BASE_URL}${item.image}`}
+                                                    alt={item.product_name}
+                                                    className="relative w-full h-full object-cover rounded-[20px] shadow-sm border border-white"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Compact Content Box */}
+                                        <div className="flex-1 flex flex-col md:flex-row justify-between w-full gap-4">
+                                            <div className="space-y-1">
+                                                <h3 className="text-lg font-bold text-slate-800 group-hover:text-emerald-600 transition-colors line-clamp-1">
+                                                    {item.product_name}
+                                                </h3>
+                                                <p className="text-slate-400 text-xs font-normal line-clamp-2 max-w-md">
+                                                    High quality premium product with verified authenticity and manufacturer warranty.
+                                                </p>
+                                                <div className="flex items-center gap-3 pt-2">
+                                                    {/* Compact Quantity Controls */}
+                                                    <div className="flex items-center bg-slate-100 rounded-xl p-1">
+                                                        <button 
+                                                            onClick={() => handleQuantityChange(item, item.qty - 1)}
+                                                            className="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-600 hover:text-emerald-600"
+                                                        >
+                                                            <FiMinus size={12} />
+                                                        </button>
+                                                        <span className="px-4 text-sm font-bold text-slate-800">{item.qty}</span>
+                                                        <button 
+                                                            onClick={() => handleQuantityChange(item, item.qty + 1)}
+                                                            className="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-slate-600 hover:text-emerald-600"
+                                                        >
+                                                            <FiPlus size={12} />
+                                                        </button>
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => handleRemoveItem(item.cart_id)}
+                                                        className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                                                    >
+                                                        <FiTrash2 size={18} />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Price Tag */}
+                                            <div className="flex flex-col items-start md:items-end justify-center min-w-[140px] sm:pt-0 pt-2 border-t sm:border-t-0 border-slate-100">
+                                                {item.discount_status === 1 && (
+                                                    <span className="text-xs text-slate-300 line-through font-bold">LKR {item.price}</span>
+                                                )}
+                                                <span className="text-xl sm:text-2xl font-extrabold text-slate-800">
+                                                    <span className="text-xs text-emerald-600 mr-0.5">LKR</span> 
+                                                    {parseFloat(item.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                </span>
+                                                <span className="text-[9px] font-bold text-emerald-500 bg-emerald-50/60 px-2.5 py-0.5 rounded-full mt-1">FREE DELIVERY</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Right Side: Order Summary */}
+                        <div className="w-full xl:w-[380px]">
+                            <div className="sticky top-10 space-y-4">
+                                <div className="bg-slate-900 text-white p-8 rounded-[35px] shadow-xl relative overflow-hidden">
+                                    {/* Design Elements */}
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-yellow-500/10 rounded-full -ml-16 -mb-16 blur-2xl"></div>
+
+                                    <h2 className="text-xl font-bold mb-6 relative z-10">Summary</h2>
+                                    
+                                    <div className="space-y-4 relative z-10 text-xs sm:text-sm">
+                                        <div className="flex justify-between text-slate-400 font-bold uppercase text-[10px] tracking-[2px]">
+                                            <span>Subtotal</span>
+                                            <span className="text-white">LKR {calculateSelectedSubtotal()}</span>
+                                        </div>
+                                        <div className="flex justify-between text-slate-400 font-bold uppercase text-[10px] tracking-[2px]">
+                                            <span>Shipping Fee</span>
+                                            <span className="text-emerald-400">FREE</span>
+                                        </div>
+                                        <div className="flex justify-between text-slate-400 font-bold uppercase text-[10px] tracking-[2px]">
+                                            <span>Discount</span>
+                                            <span className="text-white">LKR 0.00</span>
+                                        </div>
+                                        
+                                        <div className="h-[1px] bg-slate-800 my-2"></div>
+                                        
+                                        <div className="flex justify-between items-end">
+                                            <span className="text-slate-400 font-bold">Total Payable</span>
+                                            <div className="text-right">
+                                                <span className="block text-2xl font-extrabold text-white tracking-tight">
+                                                    LKR {calculateSelectedSubtotal()}
+                                                </span>
+                                                <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-widest">Taxes Included</span>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            disabled={selectedCount === 0}
+                                            className={`w-full py-4 rounded-[20px] font-bold uppercase tracking-[2px] text-xs transition-all duration-500 mt-2 ${
+                                                selectedCount > 0 
+                                                ? 'bg-emerald-500 text-white hover:bg-emerald-400 shadow-lg shadow-emerald-500/20 active:scale-95' 
+                                                : 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                                            }`}
+                                            onClick={() => navigate('/checkout')}
+                                        >
+                                            Complete Checkout
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Security Badges */}
+                                <div className="bg-white/50 border border-white/50 backdrop-blur-md rounded-[24px] p-6 flex justify-around items-center">
+                                    <div className="flex flex-col items-center gap-1.5">
+                                        <FiShield className="text-emerald-600 text-lg" />
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Safe Pay</span>
+                                    </div>
+                                    <div className="h-6 w-[1px] bg-slate-200"></div>
+                                    <div className="flex flex-col items-center gap-1.5">
+                                        <FiTruck className="text-emerald-600 text-lg" />
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Fast Ship</span>
+                                    </div>
+                                    <div className="h-6 w-[1px] bg-slate-200"></div>
+                                    <div className="flex flex-col items-center gap-1.5">
+                                        <MdVerified className="text-emerald-600 text-lg" />
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Verified</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </main>
+
             <style jsx>{`
                 @keyframes blob {
                     0% { transform: translate(0px, 0px) scale(1); }
-                    33% { transform: translate(30px, -50px) scale(1.1); }
-                    66% { transform: translate(-20px, 20px) scale(0.9); }
+                    33% { transform: translate(40px, -60px) scale(1.15); }
+                    66% { transform: translate(-20px, 20px) scale(0.85); }
                     100% { transform: translate(0px, 0px) scale(1); }
                 }
                 .animate-blob {
-                    animation: blob 7s infinite;
+                    animation: blob 12s infinite;
                 }
                 .animation-delay-2000 {
                     animation-delay: 2s;
                 }
-                .animation-delay-4000 {
-                    animation-delay: 4s;
+                .animate-spin-slow {
+                    animation: spin 6s linear infinite;
+                }
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                .line-clamp-1 {
+                    display: -webkit-box;
+                    -webkit-line-clamp: 1;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+                .line-clamp-2 {
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
                 }
             `}</style>
-        </>
+        </div>
     );
 };
 
