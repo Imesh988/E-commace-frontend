@@ -2,6 +2,7 @@ import { auth } from "../firebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import React, { useEffect, useState, useRef } from "react";
 import { userApi } from "../services/api";
+import { showToast } from "../utils/toast";
 import TextField from "../components/TextField";
 import Button from "../components/Button";
 import { FaUser } from "react-icons/fa";
@@ -153,7 +154,8 @@ const handleSubmit = async (e) => {
             address_line1: formData.addree_line1,
             address_line2: formData.address_line2,
             postal_code: formData.postal_code,
-            phone_number: formData.mobile_no_1, // Using mobile_no_1 as primary phone_number
+            phone_number: formData.mobile_no_1 || null,
+            phone_number_2: formData.mobile_no_2 || null,   // Using mobile_no_1 as primary phone_number
         };
 
         console.log("📤 Sending shipping address:", shippingAddressData);
@@ -161,16 +163,15 @@ const handleSubmit = async (e) => {
         if (editingUser) {
             // Updating existing user and their default shipping address
             await userApi.updateUser({ ...userData, shippingAddress: shippingAddressData }, editingUser.user_id);
-            alert('User and shipping address updated successfully!');
+            showToast.success('User and shipping address updated successfully!');
         } else {
-            alert('2');
             // Registering new user
             const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
             if (userCredential.user) {
                 // Pass Firebase user ID if needed for backend user creation
                 
                 await userApi.createUser({ ...userData, shippingAddress: shippingAddressData, firebase_uid: userCredential.user.uid });
-                alert('Registration successful!');
+                showToast.success('Registration successful!');
             }
         }
         if (typeof onUserAdded === 'function') {
@@ -371,31 +372,7 @@ const handleSubmit = async (e) => {
                 </div>
             </main>
 
-            {/* <style jsx>{`
-                @keyframes blob {
-                    0% {
-                        transform: translate(0px, 0px) scale(1);
-                    }
-                    33% {
-                        transform: translate(30px, -50px) scale(1.1);
-                    }
-                    66% {
-                        transform: translate(-20px, 20px) scale(0.9);
-                    }
-                    100% {
-                        transform: translate(0px, 0px) scale(1);
-                    }
-                }
-                .animate-blob {
-                    animation: blob 7s infinite;
-                }
-                .animation-delay-2000 {
-                    animation-delay: 2s;
-                }
-                .animation-delay-4000 {
-                    animation-delay: 4s;
-                }
-            `}</style> */}
+          
         </div>
     );
 };

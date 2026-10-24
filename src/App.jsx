@@ -49,6 +49,10 @@ import ProductManagement from "./pages/ProductManagement";
 import SellerApprovalList from "./pages/SellerApprovalList";
 import Pending from "./pages/Pending";
 import SellerBusinessDetailCreate from "./pages/SellerBusinessDetailCreate";
+import FeedbackPage from "./pages/FeedbackPage";
+import AllReviewsPage from "./pages/AllReviewsPage";
+import { Toaster } from "react-hot-toast";
+
 
 
 
@@ -71,6 +75,34 @@ import SellerBusinessDetailCreate from "./pages/SellerBusinessDetailCreate";
 function App() {
     return (
         <Router>
+            <Toaster 
+                position="top-center"
+                reverseOrder={false}
+                gutter={8}
+                containerClassName=""
+                containerStyle={{}}
+                toastOptions={{
+                    duration: 3000,
+                    style: {
+                        background: '#363636',
+                        color: '#fff',
+                    },
+                    success: {
+                        duration: 3000,
+                        style: {
+                            background: '#10B981',
+                            color: '#fff',
+                        },
+                    },
+                    error: {
+                        duration: 4000,
+                        style: {
+                            background: '#EF4444',
+                            color: '#fff',
+                        },
+                    },
+                }}
+            />
             <Routes>
                 <Route path="/pending" element={
                     <ProtectedRoute allowedRoles={['user']}>
@@ -78,6 +110,8 @@ function App() {
                     </ProtectedRoute>
                 } />
                 <Route path="/userRegister" element={<UserRegister />} />
+                <Route path="/feedback" element={<FeedbackPage />} />
+                <Route path="/reviews/:productId" element={<AllReviewsPage />} />
                 {/* <Route path="/user" element={<UserForm />} /> */}
                 <Route path="/role" element={
                     <ProtectedRoute allowedRoles={['super_admin']}>
@@ -169,7 +203,7 @@ function App() {
                     </ProtectedRoute>
                 } />
                 <Route path="/categoryForm" element={
-                    <ProtectedRoute allowedRoles={['user']}>
+                    <ProtectedRoute allowedRoles={['super_admin']}>
                         <CategoryForm />
                     </ProtectedRoute>
                 } />

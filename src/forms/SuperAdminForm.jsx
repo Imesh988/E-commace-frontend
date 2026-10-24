@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ImUserTie } from "react-icons/im";
 import SuperAdminRegister from "../pages/SuperAdminRegister";
 import { superAdminApi } from "../services/api";
+import { showToast } from "../utils/toast";
 import DataTabale from "../components/DataTable";
 import { CiEdit, CiTrash } from "react-icons/ci";
 import SuperAdminNavbar from "../layout/SuperadminNav";
@@ -42,13 +43,13 @@ const SuperAdminForm = () => {
                 const response = await superAdminApi.deleteSuperAdmin(id);
 
                 console.log("Delete Response:", response);
-                alert("Super Admin deleted successfully!");
+                showToast.success("Super Admin deleted successfully!");
                 fetchSuperAdmins();
 
             } catch (error) {
                 console.error("Delete Error details:", error);
                 const msg = error.response?.data?.message || "Super Admin Delete Failed !!!";
-                alert(msg);
+                showToast.error(msg);
             } finally {
                 setLoading(false);
             }

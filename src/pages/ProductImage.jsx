@@ -23,7 +23,7 @@ const ProductImage = ({ editingImage, onSaveSuccess, onCancel }) => {
         const fetchProducts = async () => {
             setLoadingProducts(true);
             try {
-                const response = await productApi.getAllProduct();
+                const response = await productApi.getMyProducts();
                 const productsData = response.data?.data || [];
                 const options = productsData.map(pro => ({
                     value: pro.product_id,

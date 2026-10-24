@@ -1,5 +1,6 @@
 import React , {useState , useEffect} from "react";
 import { superAdminApi } from "../services/api";
+import { showToast } from "../utils/toast";
 import TextField from "../components/TextField";
 import Button from "../components/Button";
 import { ImUserTie } from "react-icons/im";
@@ -73,14 +74,14 @@ const SuperAdminRegister = ({onSuperAdminAdded, editingSuperAdmin, setEditingSup
         try {
             if (editingSuperAdmin) {
                 await superAdminApi.updateSuperAdmin(formData, editingSuperAdmin.super_admin_id);
-                alert('Super Admin updated successfully!');
+                showToast.success('Super Admin updated successfully!');
             } else {
 
                  const superadminCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
 
                 if (superadminCredential.user) {
                     await superAdminApi.createSuperAdmin(formData);
-                    alert('Super Admin registered successfully!');
+                    showToast.success('Super Admin registered successfully!');
                 }
             }
     
@@ -91,7 +92,7 @@ const SuperAdminRegister = ({onSuperAdminAdded, editingSuperAdmin, setEditingSup
             handleReset();
     
         } catch (error) {
-           alert(error.code === 'auth/email-already-in-use'
+           showToast.error(error.code === 'auth/email-already-in-use'
                 ? 'This email is already registered in Firebase'
                 : error.response?.data?.msg || error.message);
             

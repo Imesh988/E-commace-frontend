@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import axiosInstance from '../api/axiosConfig';
 import Navbar from '../layout/Navbar';
-import { CartApi, productImageApi } from "../services/api";
+import { CartApi, productImageApi, feedbackApi } from "../services/api";
 import { CiShoppingCart, CiHeart } from "react-icons/ci";
-import { IoFlashOutline } from 'react-icons/io5';
+import { IoFlashOutline, IoStar, IoStarOutline, IoClose } from 'react-icons/io5';
 import { MdLocalShipping } from 'react-icons/md';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { BiSearch, BiX } from 'react-icons/bi'; // added for search
@@ -25,6 +25,13 @@ const UserDashboard = () => {
     const isAddingRef = useRef(false);
     const cartRef = useRef(null);
     const lastToastId = useRef(null);
+
+    // Modal state for product feedback
+    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [productFeedback, setProductFeedback] = useState([]);
+    const [feedbackStats, setFeedbackStats] = useState({ avgRating: 0, totalReviews: 0 });
+    const [loadingFeedback, setLoadingFeedback] = useState(false);
+    const [showModal, setShowModal] = useState(false);
 
     // ---------- SEARCH STATE ----------
     const location = useLocation();
@@ -326,6 +333,47 @@ const UserDashboard = () => {
         window.location.href = '/checkout';
     };
 
+    // ---------- FEEDBACK MODAL HANDLERS ----------
+    const handleProductClick = async (product) => {
+        setSelectedProduct(product);
+        setShowModal(true);
+        setLoadingFeedback(true);
+        
+        try {
+            const response = await feedbackApi.getFeedbackByProductId(product.product_id, { limit: 3 });
+            setProductFeedback(response.data.data || []);
+            setFeedbackStats({
+                avgRating: response.data.avgRating || 0,
+                totalReviews: response.data.totalReviews || 0
+            });
+        } catch (error) {
+            console.error('Error fetching feedback:', error);
+            setProductFeedback([]);
+            setFeedbackStats({ avgRating: 0, totalReviews: 0 });
+        } finally {
+            setLoadingFeedback(false);
+        }
+    };
+
+    const closeModal = () => {
+        setShowModal(false);
+        setSelectedProduct(null);
+        setProductFeedback([]);
+        setFeedbackStats({ avgRating: 0, totalReviews: 0 });
+    };
+
+    const renderStars = (rating) => {
+        const stars = [];
+        for (let i = 1; i <= 5; i++) {
+            if (i <= rating) {
+                stars.push(<IoStar key={i} className="text-yellow-400" size={16} />);
+            } else {
+                stars.push(<IoStarOutline key={i} className="text-yellow-400" size={16} />);
+            }
+        }
+        return stars;
+    };
+
     return (
         <>
             <ToastContainer
@@ -488,7 +536,10 @@ const UserDashboard = () => {
                                                     <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-3 z-10">
                                                         <button
                                                             className="px-4 py-1.5 bg-white/90 text-xs font-semibold text-gray-700 rounded-full shadow-lg hover:bg-emerald-50 hover:text-emerald-600 transition-all transform hover:scale-105"
-                                                            onClick={() => navigate(`/product/${productImage.product_id}`)}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleProductClick(productImage);
+                                                            }}
                                                         >
                                                             Quick View
                                                         </button>
@@ -724,6 +775,103 @@ const UserDashboard = () => {
                         </div>
                         <span className="font-medium group-hover:block hidden">View Cart</span>
                     </button>
+                )}
+
+                {/* ---------- FEEDBACK MODAL ---------- */}
+                {showModal && selectedProduct && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={closeModal}>
+                        <div 
+                            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Modal Header */}
+                            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    {selectedProduct.image && (
+                                        <img
+                                            src={`${BASE_URL}${selectedProduct.image.startsWith('/') ? selectedProduct.image : `/${selectedProduct.image}`}`}
+                                            alt={selectedProduct.product_name}
+                                            className="w-16 h-16 object-cover rounded-lg"
+                                        />
+                                    )}
+                                    <div>
+                                        <h2 className="text-xl font-bold text-gray-800">{selectedProduct.product_name}</h2>
+                                        <p className="text-lg font-semibold text-emerald-600">LKR {parseFloat(selectedProduct.price).toFixed(2)}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={closeModal}
+                                    className="p-2 hover:bg-gray-100 rounded-full transition"
+                                >
+                                    <IoClose size={24} className="text-gray-500" />
+                                </button>
+                            </div>
+
+                            {/* Modal Body */}
+                            <div className="p-6">
+                                {/* Rating Summary */}
+                                <div className="bg-gradient-to-r from-emerald-50 to-amber-50 rounded-xl p-4 mb-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-1">
+                                            {renderStars(Math.round(feedbackStats.avgRating))}
+                                        </div>
+                                        <div>
+                                            <p className="text-2xl font-bold text-gray-800">{feedbackStats.avgRating}</p>
+                                            <p className="text-sm text-gray-600">{feedbackStats.totalReviews} reviews</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Feedback List */}
+                                {loadingFeedback ? (
+                                    <div className="flex justify-center py-8">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                                    </div>
+                                ) : productFeedback.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {productFeedback.map((feedback) => (
+                                            <div key={feedback.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                                <div className="flex items-start justify-between mb-2">
+                                                    <div>
+                                                        <p className="font-semibold text-gray-800">{feedback.customer_name || 'Anonymous'}</p>
+                                                        <div className="flex items-center gap-1 mt-1">
+                                                            {renderStars(feedback.rating)}
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-xs text-gray-500">
+                                                        {new Date(feedback.created_at).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                                <p className="text-gray-600 text-sm">{feedback.feedback}</p>
+                                                {feedback.preview_img && (
+                                                    <img
+                                                        src={`${BASE_URL}${feedback.preview_img.startsWith('/') ? feedback.preview_img : `/${feedback.preview_img}`}`}
+                                                        alt="Feedback preview"
+                                                        className="mt-3 w-32 h-32 object-cover rounded-lg"
+                                                    />
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8 text-gray-500">
+                                        <p>No feedback yet</p>
+                                    </div>
+                                )}
+
+                                {/* See All Reviews Button */}
+                                <div className="mt-6">
+                                    <Link
+                                        to={`/reviews/${selectedProduct.product_id}`}
+                                        onClick={closeModal}
+                                        className="w-full block text-center py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-xl font-semibold hover:from-emerald-700 hover:to-emerald-600 transition shadow-lg"
+                                    >
+                                        See All Reviews
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
 

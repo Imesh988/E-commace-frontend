@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { sellerApi, supplierApi } from "../services/api";
+import { showToast } from "../utils/toast";
 import TextField from "../components/TextField";
 import Button from "../components/Button";
 import { SlUser } from "react-icons/sl";
@@ -88,12 +89,11 @@ const SupplierSave = ({ onSupplierAdded, editingSupplier, setEditingSupplier }) 
 
         try {
             if (editingSupplier) {
-                alert('1');
                 await supplierApi.updateSupplier(formData, editingSupplier.supplier_id);
-                alert('Supplier updated successfully!');
+                showToast.success('Supplier updated successfully!');
             } else {
                 await supplierApi.createSupplier(formData);
-                alert('Supplier registered successfully!');
+                showToast.success('Supplier registered successfully!');
             }
 
             handleReset();
@@ -101,8 +101,7 @@ const SupplierSave = ({ onSupplierAdded, editingSupplier, setEditingSupplier }) 
 
         } catch (error) {
             console.error("Error details:", error);
-
-            alert('Internal server error !!');
+            showToast.error('Internal server error !!');
 
         } finally {
             setLoading(false);

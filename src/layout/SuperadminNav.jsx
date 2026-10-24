@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { BiLogOut, BiUserPlus } from "react-icons/bi";
 import { FaUser } from "react-icons/fa";
 import { HiUserGroup } from "react-icons/hi";
-import { FiPackage } from "react-icons/fi";
+import { FiGrid, FiPackage } from "react-icons/fi";
 import { SiHomebridge } from "react-icons/si";
 import { GiReturnArrow } from "react-icons/gi";
 import { FaUsersLine } from "react-icons/fa6";
@@ -60,6 +60,11 @@ export const SuperAdminNavbar = ({ onLogout, profile }) => {
                                 <div className={iconBoxStyle}><FaUser className="text-[#4a634d]" /></div>
                                 <span>Users  </span>
                             </button>
+
+                                <button onClick={() => navigate('/categoryForm')} className={navBtnStyle}>
+        <div className={iconBoxStyle}><FiGrid className="text-[#4a634d]" /></div>
+        <span>Categories</span>
+    </button>
 
                            <button onClick={() => navigate('/sellerApproved')} className={navBtnStyle}>
                                 <div className={iconBoxStyle}><FaUsersLine className="text-[#4a634d]" /></div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import DataTabale from "../components/DataTable";
 import { CiEdit, CiSearch, CiTrash } from "react-icons/ci";
 import { supplierApi } from "../services/api";
+import { showToast } from "../utils/toast";
 import SupplierSave from "../pages/SupplierSave";
 import { SlUser } from "react-icons/sl";
 import SuperAdminNavbar from "../layout/SuperadminNav";
@@ -60,17 +61,15 @@ const SupplierForm = () => {
                 setLoading(true);
                 console.log(id);
                 
-                alert('1');
                 const response = await supplierApi.deleteSupplier(id);
-                // alert('2');
                 console.log("Delete Response:", response);
-                alert("   deleted successfully!");
+                showToast.success("   deleted successfully!");
                 fetchSupplier();
 
             } catch (error) {
                 console.error("Delete Error details:", error);
                 const msg = error.response?.data?.message || "Supplier Delete Failed !!!";
-                alert(msg);
+                showToast.error(msg);
             } finally {
                 setLoading(false);
             }

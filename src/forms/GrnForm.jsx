@@ -3,6 +3,7 @@ import DataTabale from "../components/DataTable";
 import { CiEdit, CiSearch, CiTrash } from "react-icons/ci";
 import { GrNodes } from "react-icons/gr";
 import { grnApi } from "../services/api";
+import { showToast } from "../utils/toast";
 import GRNSave from "../pages/GrnSave";
 import SellerNavbar from "../layout/SellerNavbar";
 
@@ -49,13 +50,13 @@ const GrnForm = () => {
                 const response = await grnApi.deleteGrn(id);
 
                 console.log("Delete Response:", response);
-                alert("   deleted successfully!");
+                showToast.success("   deleted successfully!");
                 fetchGrn();
 
             } catch (error) {
                 console.error("Delete Error details:", error);
                 const msg = error.response?.data?.message || "GRN Delete Failed !!!";
-                alert(msg);
+                showToast.error(msg);
             } finally {
                 setLoading(false);
             }

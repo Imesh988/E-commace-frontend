@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { sellerApi, stockApi, grnApi } from "../services/api";
+import { showToast } from "../utils/toast";
 import TextField from "../components/TextField";
 import Button from "../components/Button";
 import { AiOutlineStock } from "react-icons/ai";
 import ComboBox from "../components/ComboBox";
+
 
 const StockSave = ({ onStockAdded, editingStock, setEditingStock }) => {
     const [formData, setFormData] = useState({
@@ -132,17 +134,17 @@ const StockSave = ({ onStockAdded, editingStock, setEditingStock }) => {
         try {
             if (editingStock) {
                 await stockApi.updateStock(formData, editingStock.id);
-                alert('Stock updated successfully!');
+                showToast.success('Stock updated successfully!');
             } else {
                 await stockApi.createStock(formData);
-                alert('Stock registered successfully!');
+                showToast.success('Stock registered successfully!');
             }
             handleReset();
             onStockAdded();
         } catch (error) {
             console.error("Error details:", error);
             const errorMsg = error.response?.data?.sqlMessage || 'Internal server error !!';
-            alert(errorMsg);
+            showToast.error(errorMsg);
         } finally {
             setLoading(false);
         }

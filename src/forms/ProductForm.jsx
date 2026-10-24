@@ -4,6 +4,7 @@ import { CiEdit, CiTrash } from "react-icons/ci";
 import SellerSave from "../pages/SellerSave";
 import { TbUser } from "react-icons/tb";
 import { productApi } from "../services/api";
+import { showToast } from "../utils/toast";
 import Product from "../pages/Product";
 import Navbar from "../layout/Navbar";
 import { FaShoppingBag } from "react-icons/fa";
@@ -49,11 +50,11 @@ const ProductForm = () => {
                 setLoading(true);
              
                 await productApi.deleteProduct(id);
-                alert("Product deleted successfully!");
+                showToast.success("Product deleted successfully!");
                 fetchProduct();
             } catch (error) {
                 console.error("Delete Error:", error);
-                alert(error.response?.data?.message || "Delete Failed!");
+                showToast.error(error.response?.data?.message || "Delete Failed!");
             } finally {
                 setLoading(false);
             }

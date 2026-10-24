@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import DataTabale from "../components/DataTable";
 import { sellerApi } from "../services/api";
+import { showToast } from "../utils/toast";
 import { CiEdit, CiTrash } from "react-icons/ci";
 import SellerSave from "../pages/SellerSave";
 import { TbUser } from "react-icons/tb";
@@ -60,11 +61,11 @@ const SellerForm = () => {
             try {
                 setLoading(true);
                 await sellerApi.deleteSeller(id);
-                alert("Seller deleted successfully!");
+                showToast.success("Seller deleted successfully!");
                 fetchSellers();
             } catch (error) {
                 console.error("Delete Error:", error);
-                alert(error.response?.data?.message || "Delete Failed!");
+                showToast.error(error.response?.data?.message || "Delete Failed!");
             } finally {
                 setLoading(false);
             }

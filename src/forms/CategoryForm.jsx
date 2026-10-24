@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import DataTabale from "../components/DataTable";
 import { categoryAPI } from "../services/api";
+import { showToast } from "../utils/toast";
 import { CiEdit, CiSearch, CiTrash } from "react-icons/ci";
 import { TbCategoryPlus } from "react-icons/tb";
 import Category from "../pages/Category";
-import Navbar from "../layout/Navbar";
-import toast from "react-hot-toast";
+import SuperAdminNavbar from "../layout/SuperadminNav";
+
+
 
 const BASE_URL = "http://localhost:5000";
 const IMAGE_PATH = "/public/category/images/";
@@ -41,11 +43,11 @@ const categoryDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this category?")) {
         try {
             await categoryAPI.deleteCategory(id);
-            alert("Category deleted successfully!");
+            showToast.success("Category deleted successfully!");
             fetchCategories();
         } catch (error) {
             console.error("Error deleting category:", error);
-            alert("Failed to delete category. Please try again.");
+            showToast.error("Failed to delete category. Please try again.");
             console.error("Delete failed:", error);
         }
     }
@@ -112,7 +114,7 @@ const categoryDelete = async (id) => {
 
     return (
         <>
-            <Navbar />
+            <SuperAdminNavbar />
             <div className="relative min-h-screen bg-white overflow-x-hidden p-6 mt-6">
                 <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-100 rounded-full blur-[120px] opacity-60 pointer-events-none"></div>
                 <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-cyan-100 rounded-full blur-[120px] opacity-60 pointer-events-none"></div>

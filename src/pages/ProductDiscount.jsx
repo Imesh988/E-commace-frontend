@@ -6,7 +6,6 @@ import Button from "../components/Button";
 import { productApi, ProductDiscountApi } from "../services/api";
 import { CiDiscount1 } from "react-icons/ci";
 
-
 const ProductDiscount = ({
     editingProductDiscount,
     refreshProductDiscounts,
@@ -16,18 +15,20 @@ const ProductDiscount = ({
     const [productOptions, setProductOptions] = useState([]);
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const [formKey, setFormKey] = useState(0);   // ✅ NEW — ComboBox remount trigger
 
     const [productDiscountData, setProductDiscountData] = useState({
         product_id: "",
-        discount_type: "", 
+        discount_type: "",
         discount_amount: "",
-        status: 1, 
+        status: 1,
     });
 
+    // ============ Products dropdown ============
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const res = await productApi.getAllProduct();
+                const res = await productApi.getMyProducts();
                 const data = res.data && res.data.data ? res.data.data : [];
                 const options = data.map((pro) => ({
                     value: pro.product_id,
@@ -36,23 +37,45 @@ const ProductDiscount = ({
                 setProductOptions(options);
             } catch (error) {
                 console.error("Product Load Failed", error);
-                toast.error("Failed to load products."); 
+                toast.error("Failed to load products.");
             }
         };
         fetchProduct();
     }, []);
 
+    // ============ ✅ FIXED: Load editing data + force ComboBox refresh ============
     useEffect(() => {
         if (editingProductDiscount) {
-            setProductDiscountData(editingProductDiscount);
+            console.log("🔄 Loading discount for edit:", editingProductDiscount);
+
+            // ✅ Only set the fields we need (avoid extra DB fields like id, product_name)
+            setProductDiscountData({
+                product_id: editingProductDiscount.product_id || "",
+                discount_type: (editingProductDiscount.discount_type || "").toLowerCase().trim(),
+                discount_amount: editingProductDiscount.discount_amount || "",
+                status: editingProductDiscount.status !== undefined
+                    ? Number(editingProductDiscount.status)
+                    : 1,
+            });
         } else {
-            handleReset();
+            setProductDiscountData({
+                product_id: "",
+                discount_type: "",
+                discount_amount: "",
+                status: 1,
+            });
         }
+
+        // ✅ KEY: Force ComboBox to remount (discount_type update fix)
+        setFormKey(prev => prev + 1);
+        setErrors({});
     }, [editingProductDiscount]);
 
-
+    // ============ Handle change ============
     const handleChange = (e) => {
         const { name, value } = e.target;
+        console.log(`📝 Changed ${name}:`, value);
+
         setProductDiscountData(prev => ({ ...prev, [name]: value }));
 
         if (errors[name]) {
@@ -60,6 +83,7 @@ const ProductDiscount = ({
         }
     };
 
+    // ============ Validation ============
     const validation = () => {
         let newErrors = {};
         let isValid = true;
@@ -86,36 +110,43 @@ const ProductDiscount = ({
                 newErrors.discount_amount = "Percentage discount cannot exceed 100%.";
                 isValid = false;
             }
-           
         }
-
-        
 
         setErrors(newErrors);
         return isValid;
     };
 
+    // ============ Submit ============
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validation()) {
-            toast.error("Please correct the errors in the form."); 
+            toast.error("Please correct the errors in the form.");
             return;
         }
         setLoading(true);
 
         try {
+            // ✅ Payload — only 4 fields, correct types
+            const payload = {
+                product_id: productDiscountData.product_id,
+                discount_type: productDiscountData.discount_type,
+                discount_amount: Number(productDiscountData.discount_amount),
+                status: Number(productDiscountData.status),
+            };
+
+            console.log("📤 Sending payload:", payload);
+
             if (editingProductDiscount) {
-                await ProductDiscountApi.updateProductDiscount(editingProductDiscount.id, productDiscountData);
-                alert('Product discount updated successfully!'); 
+                await ProductDiscountApi.updateProductDiscount(editingProductDiscount.id, payload);
+                toast.success('Product discount updated successfully!');
             } else {
-                await ProductDiscountApi.createProductDiscount(productDiscountData);
-               alert('Product discount added successfully!');
+                await ProductDiscountApi.createProductDiscount(payload);
+                toast.success('Product discount added successfully!');
             }
 
             handleReset();
             if (refreshProductDiscounts) refreshProductDiscounts();
             if (cancelEdit) cancelEdit();
-
         } catch (error) {
             console.error("Error saving product discount:", error);
             const errorMsg = error.response?.data?.msg || "Failed to save product discount!";
@@ -125,6 +156,7 @@ const ProductDiscount = ({
         }
     };
 
+    // ============ Reset ============
     const handleReset = () => {
         setProductDiscountData({
             product_id: "",
@@ -132,11 +164,12 @@ const ProductDiscount = ({
             discount_amount: "",
             status: 1,
         });
-        setErrors({}); 
-        if (setEditingProductDiscount) setEditingProductDiscount(null); 
-        if (cancelEdit) cancelEdit(); 
+        setErrors({});
+        if (setEditingProductDiscount) setEditingProductDiscount(null);
+        if (cancelEdit) cancelEdit();
     };
 
+    // ============ Labels ============
     const getDiscountAmountLabel = () => {
         if (productDiscountData.discount_type === "percentage") {
             return "Discount Percentage (%)";
@@ -156,15 +189,16 @@ const ProductDiscount = ({
     };
 
     const statusOptions = [
-        { value: 1, label: "Available" }, 
+        { value: 1, label: "Available" },
         { value: 0, label: "Unavailable" }
     ];
 
-    const discountTypr = [
+    const discountTypes = [
         { value: "percentage", label: "Percentage" },
         { value: "fixed", label: "Fixed" }
     ];
 
+    // ============ Render ============
     return (
         <div className="relative z-10 w-full max-w-5xl bg-white backdrop-blur-2xl shadow-2xl rounded-[40px] p-12 border border-white mx-auto">
             <div className="flex items-center gap-4 mb-12">
@@ -172,7 +206,7 @@ const ProductDiscount = ({
                     <CiDiscount1 className="text-white" size={20} />
                 </div>
                 <h2 className="text-2xl font-bold text-emerald-600">
-                    {editingProductDiscount ? "Update Product Discount" : "Add Product Discount"} {/* " Update" -> "Update" for consistency */}
+                    {editingProductDiscount ? "Update Product Discount" : "Add Product Discount"}
                 </h2>
             </div>
 
@@ -180,6 +214,7 @@ const ProductDiscount = ({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-x-12 gap-y-8 mb-12">
 
                     <ComboBox
+                        key={`product-${formKey}`}
                         label="Assign Product"
                         name="product_id"
                         value={productDiscountData.product_id}
@@ -189,17 +224,17 @@ const ProductDiscount = ({
                         error={errors.product_id}
                     />
 
-
+                    {/* ✅ KEY FIX: force ComboBox to remount when editingProductDiscount changes */}
                     <ComboBox
+                        key={`discount-type-${formKey}`}
                         label="Discount Type"
                         name="discount_type"
                         value={productDiscountData.discount_type}
                         onChange={handleChange}
-                        options={discountTypr}
+                        options={discountTypes}
                         placeholder="Select Discount Type"
-                        error={errors.discount_type} 
+                        error={errors.discount_type}
                     />
-
 
                     <TextField
                         label={getDiscountAmountLabel()}
@@ -209,11 +244,11 @@ const ProductDiscount = ({
                         placeholder={getDiscountAmountPlaceholder()}
                         error={errors.discount_amount}
                         type="number"
-                        step="any" 
+                        step="any"
                     />
 
-
                     <ComboBox
+                        key={`status-${formKey}`}
                         label="Status"
                         name="status"
                         value={productDiscountData.status}

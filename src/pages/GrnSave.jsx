@@ -4,6 +4,8 @@ import Button from "../components/Button";
 import { GrNodes } from "react-icons/gr";
 import ComboBox from "../components/ComboBox";
 import { supplierApi, productApi, grnApi } from "../services/api";
+import { showToast } from "../utils/toast";
+
 
 
 const GRNSave = ({ onGrnAdded, editingGrn, setEditingGrn }) => {
@@ -120,10 +122,10 @@ const GRNSave = ({ onGrnAdded, editingGrn, setEditingGrn }) => {
         try {
             if (editingGrn) {
                 await grnApi.updateGrn(formData, editingGrn.id);
-                alert('GRN updated successfully!');
+                showToast.success('GRN updated successfully!');
             } else {
                 await grnApi.createGrn(formData);
-                alert('GRN registered successfully!');
+                showToast.success('GRN registered successfully!');
             }
 
             handleReset();
@@ -132,7 +134,7 @@ const GRNSave = ({ onGrnAdded, editingGrn, setEditingGrn }) => {
         } catch (error) {
             console.error("Error details:", error);
             const errorMsg = error.response?.data?.sqlMessage || 'Internal server error !!';
-            alert(errorMsg);
+            showToast.error(errorMsg);
         } finally {
             setLoading(false);
         }

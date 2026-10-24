@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { BiLogOut } from "react-icons/bi";
-import { FaBoxes, FaClipboardList, FaBoxOpen, FaUser } from "react-icons/fa";
+import { BiLogOut, BiUser } from "react-icons/bi";
+import { FaBoxes, FaClipboardList, FaBoxOpen } from "react-icons/fa";
 import { SiHomebridge } from "react-icons/si";
 import { GrNodes } from "react-icons/gr";
 
@@ -24,6 +24,10 @@ export const SellerNavbar = ({ onLogout, profile }) => {
             <div className="w-full bg-white/80 backdrop-blur-2xl border border-[#d1dbcd] shadow-xl rounded-[32px] px-6 transition-all duration-500">
                 <div className="flex justify-between items-center h-20">
 
+                               {/* <div 
+                        className="flex-shrink-0 flex items-center gap-3 group cursor-pointer"
+                        onClick={() => navigate('/super-admin')}
+                    ></div> */}
                     <div 
                         className="flex-shrink-0 flex items-center gap-3 group cursor-pointer"
                         onClick={() => navigate('/super-admin')}
@@ -58,11 +62,10 @@ export const SellerNavbar = ({ onLogout, profile }) => {
                                 <div className={iconBoxStyle}><SiHomebridge className="text-[#4a634d]" /></div>
                                 <span>Dashboard</span>
                             </button>
-
-                            <button onClick={() => navigate('/profile')} className={navBtnStyle}>
-                                <div className={iconBoxStyle}><FaUser className="text-[#4a634d]" /></div>
-                                <span>Profile</span>
-                            </button>
+                              <button onClick={() => navigate('/profile')} className={navBtnStyle}>
+                                                            <div className={iconBoxStyle}><BiUser className="text-[#4a634d]" size={18} /></div>
+                                                            <span>Profile</span>
+                                                        </button>
                         </div>
 
                         <div className="h-8 w-[1px] bg-gray-200 mx-2 hidden md:block"></div>

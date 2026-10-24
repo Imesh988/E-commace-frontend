@@ -4,6 +4,7 @@ import { CiDiscount1, CiEdit, CiTrash } from "react-icons/ci";
 import { TbUser } from "react-icons/tb";
 import Navbar from "../layout/Navbar";
 import { ProductDiscountApi } from "../services/api";
+import { showToast } from "../utils/toast";
 import ProductDiscount from "../pages/ProductDiscount";
 import { FaShoppingBag } from "react-icons/fa";
 import { CheckCircleIcon, XCircleIcon } from "lucide-react";
@@ -50,11 +51,11 @@ const ProductDiscountForm = () => {
                                
                                 await ProductDiscountApi.deleteProductDiscount(id);
                                 
-                            alert("Product deleted successfully!");
+                            showToast.success("Product deleted successfully!");
                             fetchProductDiscount();
                         } catch (error) {
                             console.error("Delete Error:", error);
-                            alert(error.response?.data?.message || "Delete Failed!");
+                            showToast.error(error.response?.data?.message || "Delete Failed!");
                         } finally {
                             setLoading(false);
                         }

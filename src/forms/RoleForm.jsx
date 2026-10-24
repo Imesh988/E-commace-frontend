@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import DataTabale from "../components/DataTable";
 import { roleApi } from "../services/api";
+import { showToast } from "../utils/toast";
 import { CiEdit, CiSearch, CiTrash } from "react-icons/ci";
 import { HiUserGroup } from "react-icons/hi";
 import RoleSave from "../pages/RoleSave";
@@ -45,7 +46,7 @@ const RoleForm = () => {
             }
         } catch (error) {
             console.log(error);
-            alert("Role Delete Failed !!!");
+            showToast.error("Role Delete Failed !!!");
 
         }
     }

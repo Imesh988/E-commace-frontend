@@ -1,4 +1,5 @@
 import axios from "axios";
+import { showToast } from "../utils/toast";
 
 const httpRequest = axios.create({
     baseURL: "http://localhost:5000/api/v1",
@@ -45,6 +46,16 @@ httpRequest.interceptors.response.use(
     },
     (error) => {
         console.log('❌ [httpRequest] Response error:', error.response?.status, error.response?.data);
+
+        // Show toast error for all HTTP errors except the specific 404 case
+        if (error.response?.status !== 404 || 
+            error.response?.data?.msg !== "No Shipping Addresses Found for this user!") {
+            const errorMessage = error.response?.data?.message || 
+                               error.response?.data?.msg || 
+                               error.response?.data?.error || 
+                               'Server error occurred';
+            showToast.error(errorMessage);
+        }
 
         // Handle 404 error for shipping addresses
         if (error.response?.status === 404 &&
@@ -164,13 +175,13 @@ export const grnApi = {
 export const productApi = {
     createProduct: (product) => httpRequest.post("/product/create", product),
     getAllProduct: (params = {}) => httpRequest.get("/product/all", { params }),
-    getProductById: (productId) => httpRequest.get(`/product/id/${productId}`),
+    getMyProducts: (params = {}) => httpRequest.get("/product/my-products", { params }),   // ✅ NEW
+    getProductById: (productId) => httpRequest.get(`/product/find/${productId}`),
     getProductByText: (text) => httpRequest.get(`/product/search/${text}`),
     updateProduct: (productId, product) => httpRequest.put(`/product/update/${productId}`, product),
     deleteProduct: (productId) => httpRequest.delete(`/product/delete/${productId}`),
     getAllProductText: (params = {}) => httpRequest.get("/product/allText", { params })
 }
-
 
 export const categoryAPI = {
     createCategory: (formData) => {
@@ -204,17 +215,13 @@ export const categoryAPI = {
 export const productImageApi = {
     createProductImage: (formData) => {
         return httpRequest.post("/product-image/create", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
+            headers: { "Content-Type": "multipart/form-data" },
         });
     },
 
     updateProductImage: (productImageId, formData) => {
         return httpRequest.put(`/product-image/update/${productImageId}`, formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
+            headers: { "Content-Type": "multipart/form-data" },
         });
     },
 
@@ -223,17 +230,19 @@ export const productImageApi = {
     getProductImageByCategory: (categoryName) => httpRequest.get(`/product-image/category/${categoryName}`),
     deleteProductImage: (productImageId) => httpRequest.delete(`/product-image/delete/${productImageId}`),
     getAllProductImage: () => httpRequest.get("/product-image/all"),
+    getMyProductImages: () => httpRequest.get("/product-image/my-images"),   // ✅ NEW
     getProductImagesByProductId: (productId) => httpRequest.get(`/product-image/product/${productId}`),
 };
 export const ProductDiscountApi = {
     createProductDiscount: (productDiscount) => httpRequest.post("/product-discount/create", productDiscount),
     getAllProductDiscount: () => httpRequest.get("/product-discount/all"),
-    getProductDiscountById: (productDiscountId) => httpRequest.get(`/product-discount/id/${productDiscountId}`),
+    getMyProductDiscounts: (params = {}) => httpRequest.get("/product-discount/my-discounts", { params }),   // ✅ NEW
+    getProductDiscountById: (productDiscountId) => httpRequest.get(`/product-discount/find/${productDiscountId}`),   // ✅ URL fix
+    getProductDiscountByProductId: (productId) => httpRequest.get(`/product-discount/by-product/${productId}`),   // ✅ NEW
     getProductDiscountByText: (text) => httpRequest.get(`/product-discount/search/${text}`),
     updateProductDiscount: (productDiscountId, productDiscount) => httpRequest.put(`/product-discount/update/${productDiscountId}`, productDiscount),
     deleteProductDiscount: (productDiscountId) => httpRequest.delete(`/product-discount/delete/${productDiscountId}`)
 };
-
 export const CartApi = {
     getCartItems: () => httpRequest.get("/cart/all"),
     getCartCount: () => httpRequest.get("/cart/count"),
@@ -250,6 +259,7 @@ export const CartApi = {
     updateCartItem: (cartId, cartItem) => httpRequest.put(`/cart/update/${cartId}`, cartItem),
     removeCartItem: (cartId) => httpRequest.delete(`/cart/remove/${cartId}`),
     clearCart: () => httpRequest.delete("/cart/clear"),
+        mergeGuestCart: (items) => httpRequest.post('/cart/merge', { items }),   // ✅ NEW
 };
 
 export const shippingAddressApi = {
@@ -381,11 +391,17 @@ export const sellerBusinessDetailApi = {
 };
 
 export const feedbackApi = {
-    createFeedback: (feedbackData) => httpRequest.post('/feedback/create', feedbackData),
+    createFeedback: (feedbackData) => {
+        return httpRequest.post('/feedback/create', feedbackData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+    },
     getAllFeedback: () => httpRequest.get('/feedback/all'),
     getFeedbackById: (id) => httpRequest.get(`/feedback/${id}`),
     getFeedbackByOrderId: (orderId) => httpRequest.get(`/feedback/order/${orderId}`),
-    getFeedbackByReturnOrderId: (returnOrderId) => httpRequest.get(`/feedback/return/${returnOrderId}`),
+    getFeedbackByProductId: (productId, params = {}) => httpRequest.get(`/feedback/product/${productId}`, { params }),
     updateFeedbackStatus: (id, status) => httpRequest.put(`/feedback/status/${id}`, { status }),
     updateFeedback: (id, feedbackData) => httpRequest.put(`/feedback/${id}`, feedbackData),
     deleteFeedback: (id) => httpRequest.delete(`/feedback/${id}`),

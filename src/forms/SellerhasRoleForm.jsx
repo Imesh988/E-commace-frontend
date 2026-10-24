@@ -3,6 +3,7 @@ import DataTabale from "../components/DataTable";
 import { CiEdit, CiSearch, CiTrash } from "react-icons/ci";
 import Navbar from "../layout/Navbar";
 import { sellerHasRoleApi } from "../services/api";
+import { showToast } from "../utils/toast";
 import SellerHasRoleSave from "../pages/SellerHasRoleSave";
 import { RiUser5Fill } from "react-icons/ri";
 
@@ -49,13 +50,13 @@ const SellerhasRoleForm = () => {
 
                 const response = await sellerHasRoleApi.deleteSellerHasRole(id);
                 console.log("Delete Response:", response);
-                alert("   deleted successfully!");
+                showToast.success("   deleted successfully!");
                 fetchSellerhasRole();
 
             } catch (error) {
                 console.error("Delete Error details:", error);
                 const msg = error.response?.data?.message || "Seller Has Role Delete Failed !!!";
-                alert(msg);
+                showToast.error(msg);
             } finally {
                 setLoading(false);
             }

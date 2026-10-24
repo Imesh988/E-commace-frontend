@@ -5,7 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosConfig';
 import { Eye, EyeOff, Mail, Smartphone, Globe, ArrowLeft } from 'lucide-react';
 import Navbar from '../layout/Navbar';
-import { shippingAddressApi } from "../services/api";
+import { CartApi, shippingAddressApi } from "../services/api";
+import { showToast } from "../utils/toast";
 
 
 const Login = () => {
@@ -42,6 +43,15 @@ const handleLogin = async (e) => {
 
                 console.log("3. Token after localStorage:", localStorage.getItem('token'));
                 console.log("4. User data after localStorage:", userData);
+
+                localStorage.setItem('token', token);
+localStorage.setItem('role', response.data.role);
+localStorage.setItem('user', JSON.stringify(userData));
+
+console.log("3. Token after localStorage:", localStorage.getItem('token'));
+console.log("4. User data after localStorage:", userData);
+
+// ✅ මෙතන — මේ line එකට පස්සේ merge add කරන්න
 
                 // ✅ මෙතනදි user address එක shipping address එකට copy කරන්න
                 if (userData.user_id) {
@@ -103,6 +113,20 @@ const handleLogin = async (e) => {
                     }
                 }
 
+                // ✅ Token save කරාට පස්සේ — guest cart merge කරන්න
+const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+if (guestCart.length > 0) {
+    try {
+        console.log(`📦 Merging ${guestCart.length} guest cart items...`);
+        await CartApi.mergeGuestCart(guestCart);
+        localStorage.removeItem('guestCart');
+        console.log("✅ Guest cart merged successfully");
+    } catch (mergeErr) {
+        console.error("⚠️ Cart merge failed:", mergeErr);
+        // Merge fail වුණත් login දිගටම කරන්න
+    }
+}
+
                 if (response.data.role === 'super_admin') {
                     navigate('/super-admin/dashboard');
                 } else {
@@ -119,14 +143,14 @@ const handleLogin = async (e) => {
 
     const handleForgotPassword = async () => {
         if (!email) {
-            alert("Please enter your email in the email box above !! ");
+            showToast.warning("Please enter your email in the email box above !! ");
             return;
         }
         try {
             await sendPasswordResetEmail(auth, email);
-            alert("A password reset link has been sent to your email address !! ");
+            showToast.success("A password reset link has been sent to your email address !! ");
         } catch (error) {
-            alert("Error: " + error.message);
+            showToast.error("Error: " + error.message);
         }
     };
 

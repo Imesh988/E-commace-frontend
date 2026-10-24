@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { roleApi } from "../services/api";
+import { showToast } from "../utils/toast";
 import TextField from "../components/TextField";
 import Button from "../components/Button";
 import { HiUserGroup } from "react-icons/hi";
@@ -68,10 +69,10 @@ const RoleSave = ({ onRoleAdded, editingRole, setEditingRole }) => {
     try {
         if (editingRole) {
             await roleApi.updateRole(formData, editingRole.role_id);
-            alert('Role updated successfully!');
+            showToast.success('Role updated successfully!');
         } else {
             await roleApi.createRole(formData);
-            alert('Registration successful!');
+            showToast.success('Registration successful!');
         }
 
         handleReset();
@@ -80,7 +81,7 @@ const RoleSave = ({ onRoleAdded, editingRole, setEditingRole }) => {
     } catch (error) {
         console.error("Error details:", error);
         
-        alert('Internal server error !!');
+        showToast.error('Internal server error !!');
         
     } finally {
         setLoading(false);

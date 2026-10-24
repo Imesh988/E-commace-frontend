@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from 'react-router-dom';
 import { orderApi } from "../services/api";
 import { toast } from "react-toastify";
-import { FiPackage, FiCalendar, FiHash, FiArrowRight, FiXCircle, FiRotateCcw } from 'react-icons/fi';
+import { FiPackage, FiCalendar, FiHash, FiArrowRight, FiXCircle, FiRotateCcw, FiStar } from 'react-icons/fi';
 import ReturnModal from "../pages/ReturnModal";
 import Navbar from "../layout/Navbar";
 
@@ -241,12 +241,20 @@ const OrdersPage = () => {
                                         )}
 
                                         {order.status === 4 && activeTab !== 'cancelled' && order.return_status === null && (
-                                            <button
-                                                onClick={() => handleReturnClick(order)}
-                                                className="flex-1 py-3.5 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100 flex items-center justify-center gap-2"
-                                            >
-                                                <FiRotateCcw /> Return
-                                            </button>
+                                            <>
+                                                <button
+                                                    onClick={() => handleReturnClick(order)}
+                                                    className="flex-1 py-3.5 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-emerald-600 hover:text-white transition-all border border-emerald-100 flex items-center justify-center gap-2"
+                                                >
+                                                    <FiRotateCcw /> Return
+                                                </button>
+                                                <button
+                                                    onClick={() => navigate('/feedback', { state: { order_id: order.order_id } })}
+                                                    className="flex-1 py-3.5 bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-amber-600 hover:text-white transition-all border border-amber-100 flex items-center justify-center gap-2"
+                                                >
+                                                    <FiStar /> Feedback
+                                                </button>
+                                            </>
                                         )}
                                     </div>
                                 </div>

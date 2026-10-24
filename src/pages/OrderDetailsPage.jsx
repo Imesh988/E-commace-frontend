@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { 
     FiPackage, FiMapPin, FiCreditCard, FiArrowLeft, 
     FiPrinter, FiInfo, FiCalendar, FiCheckCircle,
-    FiTruck, FiClock, FiDollarSign, FiTag, FiUser
+    FiTruck, FiClock, FiDollarSign, FiTag, FiUser, FiStar
 } from 'react-icons/fi';
 import Navbar from '../layout/Navbar';
 
@@ -316,6 +316,15 @@ const OrderDetailsPage = () => {
                                 </div>
 
                                 <div className="mt-6 pt-6 border-t border-slate-100/80 space-y-3">
+                                    {order.status === 4 && (
+                                        <button 
+                                            onClick={() => navigate('/feedback', { state: { order_id: order.order_id } })}
+                                            className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-amber-200/50 hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all duration-300 flex items-center justify-center gap-2"
+                                        >
+                                            <FiStar size={18} />
+                                            Leave Feedback
+                                        </button>
+                                    )}
                                     <button className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-200/50 hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all duration-300 flex items-center justify-center gap-2">
                                         <FiCheckCircle size={18} />
                                         Confirm Delivery

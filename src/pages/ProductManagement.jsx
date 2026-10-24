@@ -14,6 +14,7 @@ import SellerNavbar from "../layout/SellerNavbar";
 
 const BASE_URL = "http://localhost:5000";
 
+
 const ProductManagement = () => {
     const [activeTab, setActiveTab] = useState("products");
     const [loading, setLoading] = useState(false);
@@ -29,51 +30,51 @@ const ProductManagement = () => {
         setActiveTab(tab);
         setSearchTerm("");
     };
+const fetchProducts = async () => {
+    setLoading(true);
+    try {
+        const request = searchTerm.trim() === ""
+            ? await productApi.getMyProducts()                    // ✅ My products only
+            : await productApi.getMyProducts({ search: searchTerm });   // ✅ My products + search
+        setProducts(request.data?.data || request.data || []);
+    } catch (err) {
+        console.error("❌ Fetch products error:", err);
+        setProducts([]);
+    } finally {
+        setLoading(false);
+    }
+};
+   const fetchImages = useCallback(async () => {
+    setLoading(true);
+    try {
+        const response = await productImageApi.getMyProductImages();   // ✅ CHANGED
+        const data = response.data?.data || [];
+        const filtered = searchTerm.trim() !== "" 
+            ? data.filter(img => img.product_name?.toLowerCase().includes(searchTerm.toLowerCase()))
+            : data;
+        setProductImages(filtered);
+    } catch (error) {
+        console.error("❌ Fetch images error:", error);
+        setProductImages([]);
+    } finally {
+        setLoading(false);
+    }
+}, [searchTerm]);
 
-    const fetchProducts = async () => {
-        setLoading(true);
-        try {
-            const request = searchTerm.trim() === ""
-                ? await productApi.getAllProduct()
-                : await productApi.getProductByText(searchTerm);
-            setProducts(request.data?.data || request.data || []);
-        } catch (err) {
-            setProducts([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchImages = useCallback(async () => {
-        setLoading(true);
-        try {
-            const response = await productImageApi.getAllProductImage();
-            const data = response.data?.data || [];
-            const filtered = searchTerm.trim() !== "" 
-                ? data.filter(img => img.product_name?.toLowerCase().includes(searchTerm.toLowerCase()))
-                : data;
-            setProductImages(filtered);
-        } catch (error) {
-            setProductImages([]);
-        } finally {
-            setLoading(false);
-        }
-    }, [searchTerm]);
-
-    const fetchDiscounts = async () => {
-        setLoading(true);
-        try {
-            const request = searchTerm.trim() === ""
-                ? await ProductDiscountApi.getAllProductDiscount()
-                : await ProductDiscountApi.getProductDiscountByText(searchTerm);
-            setDiscounts(request.data?.data || request.data || []);
-        } catch (err) {
-            setDiscounts([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
+  const fetchDiscounts = async () => {
+    setLoading(true);
+    try {
+        const request = searchTerm.trim() === ""
+            ? await ProductDiscountApi.getMyProductDiscounts()                       // ✅ Changed
+            : await ProductDiscountApi.getMyProductDiscounts({ search: searchTerm }); // ✅ Changed
+        setDiscounts(request.data?.data || request.data || []);
+    } catch (err) {
+        console.error("❌ Fetch discounts error:", err);
+        setDiscounts([]);
+    } finally {
+        setLoading(false);
+    }
+};
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             if (activeTab === "products") fetchProducts();

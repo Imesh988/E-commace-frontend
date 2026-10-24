@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { sellerApi, roleApi, sellerHasRoleApi } from "../services/api";
+import { showToast } from "../utils/toast";
 import TextField from "../components/TextField";
 import Button from "../components/Button";
 import { RiUser5Fill } from "react-icons/ri";
@@ -106,10 +107,10 @@ const SellerhasRoleSave = ({ onSellerHasRole, editingSellerHasRole, setEditingSe
 
         if (editingSellerHasRole) {
             await sellerHasRoleApi.updateSellerhasRole(payload, editingSellerHasRole.id);
-            alert('Seller has role updated successfully!');
+            showToast.success('Seller has role updated successfully!');
         } else {
             await sellerHasRoleApi.createSellerHasRole(payload);
-            alert('Seller has role registered successfully!');
+            showToast.success('Seller has role registered successfully!');
         }
 
         handleReset();
@@ -118,7 +119,7 @@ const SellerhasRoleSave = ({ onSellerHasRole, editingSellerHasRole, setEditingSe
     } catch (error) {
         console.error("Error details:", error);
         const errorMsg = error.response?.data?.sqlMessage || 'Internal server error !!';
-        alert(errorMsg);
+        showToast.error(errorMsg);
     } finally {
         setLoading(false);
     }

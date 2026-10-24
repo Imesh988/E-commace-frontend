@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import TextField from "../components/TextField";
 import ComboBox from "../components/ComboBox";
 import Button from "../components/Button";
+import { showToast } from "../utils/toast";
 
 const Product = ({
     editingProduct,
@@ -93,10 +94,10 @@ const Product = ({
             console.log("Updating ID:", idValue); 
 
             await productApi.updateProduct(idValue, payload);
-            alert('Product update successful !!');
+            showToast.success('Product update successful !!');
         } else {
             await productApi.createProduct(productData);
-            alert('Product added successful !!');
+            showToast.success('Product added successful !!');
         }
 
         handleReset();
@@ -106,7 +107,7 @@ const Product = ({
     } catch (error) {
         console.error("Error updating:", error);
         const errorMsg = error.response?.data?.msg || "Save Failed!";
-        toast.error(errorMsg);
+        showToast.error(errorMsg);
     } finally {
         setLoading(false);
     }
